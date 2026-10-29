@@ -50,7 +50,7 @@ flowchart LR
 Requirements: Docker Desktop, [uv](https://docs.astral.sh/uv/), Node.js LTS, Ollama, and a GPU with 8 GB VRAM recommended for the LLM features.
 
 ```bash
-git clone https://github.com/<you>/skarbonka.git
+git clone https://github.com/igorkotlarz1/skarbonka.git
 cd skarbonka
 docker compose up -d
 ```

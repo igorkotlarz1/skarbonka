@@ -1,0 +1,38 @@
+# Real bank exports and anything derived from them
+data/
+models/
+mlruns/
+reports_out/
+*.csv
+*.xlsx
+*.pdf
+!backend/tests/fixtures/**/*.csv
+
+# Secrets
+.env
+*.env
+!.env.example
+token*.json
+credentials*.json
+
+# Python
+__pycache__/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json

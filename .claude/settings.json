@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./data/**)",
+      "Edit(./data/**)",
+      "Read(./.env)",
+      "Read(./backend/.env)",
+      "Read(./models/**)"
+    ],
+    "allow": [
+      "Bash(uv run pytest *)",
+      "Bash(uv run ruff *)",
+      "Bash(uv run mypy *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(docker compose ps)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Grep|Glob|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_raw_data.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,11 +1,11 @@
 # Skarbonka
 
-Local-first app that imports ING bank CSV exports, categorizes transactions (rules → ML → local LLM), lets the owner mark personal spending, and produces a settlement (PDF + Excel + Gmail draft) for the owner's parents. Goals: `docs/goals.md`. Domain, CSV format, decisions: `docs/context.md` (read only when you need domain knowledge). Session plan: `docs/plan-sesji.md`. Progress log: `docs/progress.md`.
+Local-first app that imports ING bank CSV exports, categorizes transactions (rules → ML → local LLM), lets the owner mark personal spending, and produces a settlement (PDF + Excel + Gmail draft) for the owner's parents. Goals: `docs/goals.md`. Domain, CSV format, decisions: `docs/context.md` (read only when you need domain knowledge). Session plan: `docs/session-plan.md`. Progress log: `docs/progress.md`.
 
 ## Hard rules
 
 - NEVER read, grep, list, or print anything under `data/`. It holds real bank exports. If you need real-data facts, ask the user to run a command in their own terminal and paste the aggregated output.
-- Tests and fixtures use only synthetic data from `tests/fixtures/` (generated in the exact ING format). Never copy real values into code, tests, or docs.
+- Tests and fixtures use only synthetic data from `backend/tests/fixtures/` (generated in the exact ING format). Never copy real values into code, tests, or docs.
 - No cloud LLM APIs or keys in the app. All models run locally via Ollama.
 - Money is `Decimal` in Python and `NUMERIC(12,2)` in Postgres. Never `float` for amounts. Timezone `Europe/Warsaw`.
 - Bank transactions are immutable. Category, personal flag, and splits live in `allocations`.
@@ -32,7 +32,7 @@ Python 3.12, uv, FastAPI, Pydantic v2, SQLAlchemy 2.0 (typed, `Mapped[...]`), Al
 
 ## Conventions
 
-- Code, comments, commit messages, and README in English. UI strings in Polish.
+- Code, comments, docs, commit messages, and README in English. UI strings, category names, and reports in Polish.
 - Conventional commits (`feat:`, `fix:`, `test:`, `chore:`, `docs:`).
 - Parsers and money logic: write the test first, keep functions pure and small.
 - Ask before adding a new dependency. Prefer the standard library and what the stack already has.
@@ -40,7 +40,7 @@ Python 3.12, uv, FastAPI, Pydantic v2, SQLAlchemy 2.0 (typed, `Mapped[...]`), Al
 
 ## Working style (token budget)
 
-- One session = one task from `docs/plan-sesji.md`. Start with a short plan, wait for approval, then implement.
+- One session = one task from `docs/session-plan.md`. Start with a short plan, wait for approval, then implement.
 - Read only the files the task needs. Do not scan the whole repo; use targeted search.
 - Do not paste long test or build output back; summarize failures (first error, file, line).
 - When the task is ambiguous, ask one concise question instead of guessing.

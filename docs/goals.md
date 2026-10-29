@@ -1,58 +1,58 @@
-# Skarbonka: cele projektu
+# Skarbonka: goals
 
-> Local-first AI do rozliczania domowych wydatków. Wszystkie modele działają lokalnie, żadne dane finansowe nie trafiają do chmury.
+> Local-first AI for settling household expenses. Every model runs locally; no financial data goes to the cloud.
 
 ## Problem
 
-Robię zakupy dla domu i rozliczam się z nich z rodzicami: płacę wszystko z góry, a raz na tydzień, dwa tygodnie albo miesiąc wysyłam im PDF z podsumowaniem i Excel z listą wydatków, a oni zwracają mi 100% kwoty. Dziś robię to w notebooku Jupyter (`tracker.ipynb`), który wymaga ręcznego czyszczenia CSV z ING, ręcznego usuwania transakcji osobistych po indeksach i kategoryzuje wydatki regexami.
+I buy groceries for the household and settle up with my parents: I pay everything upfront, and every week, two weeks or month I email them a PDF summary and an Excel list, and they refund 100%. Today this runs in a Jupyter notebook (`tracker.ipynb`) that needs hand-cleaned ING CSV files, drops personal purchases by row index, and categorizes with regexes.
 
-## Cele produktowe
+## Product goals
 
-1. **Rozliczenie bez bólu.** Od pliku CSV z ING do szkicu maila z PDF i Excelem w kilka minut, bez ręcznego czyszczenia i bez edytowania kodu.
-2. **Kategorie, którym można ufać.** Reguły, ML i lokalny LLM przypisują kategorie z poziomem pewności. Ja tylko przeglądam to, co niepewne, a system uczy się z moich poprawek.
-3. **Osobiste osobno.** Jedno kliknięcie oznacza transakcję (lub jej część po podziale paragonu) jako osobistą, więc nie trafia do rozliczenia.
-4. **Wgląd w wydatki.** Dashboard z udziałem kategorii, trendami z kilku lat i prognozą na kolejny miesiąc z przedziałami niepewności.
-5. **Asystent.** Pytam po polsku o swoje wydatki, a asystent odpowiada na podstawie danych i potrafi wykonać zadania (np. przekategoryzować, przygotować rozliczenie) po moim zatwierdzeniu.
+1. **Painless settlement.** From an ING CSV to a Gmail draft with PDF and Excel in minutes, with no manual cleaning and no code edits.
+2. **Trustworthy categories.** Rules, ML and a local LLM assign categories with a confidence score. The owner reviews only the uncertain ones, and the system learns from corrections.
+3. **Personal kept apart.** One click marks a transaction (or a part of a split receipt) as personal, so it stays out of the settlement.
+4. **Spending insight.** Dashboard with category shares, multi-year trends, and next-month forecasts with uncertainty intervals.
+5. **Assistant.** Ask about spending in Polish; the assistant answers from the data and performs tasks (recategorize, draft a settlement) after approval.
 
-## Cele nauki
+## Learning goals
 
-- Konteneryzacja całego systemu (Docker Compose) na Windows z WSL2.
-- Lokalne LLM na RTX 2070 8 GB: Ollama, wybór i ewaluacja modeli, structured output, tool calling.
-- MCP, agent z narzędziami, text-to-SQL z bezpiecznymi uprawnieniami.
-- Kolejki zadań (Celery + Redis), monitoring (Prometheus + Grafana), MLflow.
-- Frontend w React + TypeScript (pierwszy raz, z pomocą Claude Code).
-- Prognozowanie szeregów czasowych z przedziałami konformalnymi i uzgadnianiem hierarchii.
+- Containerize the whole system (Docker Compose) on Windows with WSL2.
+- Local LLMs on an RTX 2070 8 GB: Ollama, model selection and evaluation, structured output, tool calling.
+- MCP, a tool-using agent, safe read-only text-to-SQL.
+- Task queues (Celery + Redis), monitoring (Prometheus + Grafana), MLflow.
+- Frontend in React + TypeScript (first time, with Claude Code's help).
+- Time-series forecasting with conformal intervals and hierarchical reconciliation.
 
-## Cele portfolio
+## Portfolio goals
 
-- Publiczne repozytorium z danymi wyłącznie syntetycznymi, trybem demo i zielonym CI.
-- README z diagramem architektury, zrzutami ekranu i wynikami ewaluacji modeli (kategoryzacja, prognozy, asystent).
-- Projekt, który pokazuje warsztat Data Scientisty (metryki, kalibracja, testy wsteczne) i inżyniera (testy, migracje, kontenery).
+- Public repository with synthetic data only, a demo mode, and green CI.
+- README with an architecture diagram, screenshots, and model evaluation results (categorization, forecasts, assistant).
+- Shows data science craft (metrics, calibration, backtesting) and engineering craft (tests, migrations, containers).
 
-## Mierniki sukcesu MVP
+## MVP success metrics
 
-- Import pliku z ING bez ręcznej ingerencji, liczba i suma transakcji zgodne z podsumowaniem banku.
-- Ponowny import tego samego okresu dodaje 0 duplikatów.
-- Klasyfikator lepszy od regexów z notebooka na zbiorze testowym przejrzanym przeze mnie.
-- Przegląd tygodnia lub miesiąca zajmuje mniej niż 5 minut.
-- Suma rozliczenia zgodna z obliczeniem ręcznym co do grosza.
-- PDF i Excel trafiają jako szkic do Gmaila.
-- Całość startuje komendą `docker compose up`.
+- An ING file imports without manual fixes; row count and total match the bank's summary.
+- Re-importing the same period adds 0 duplicates.
+- The classifier beats the notebook's regexes on an owner-reviewed test set.
+- Reviewing a week or month takes under 5 minutes.
+- The settlement total matches a manual calculation to the grosz.
+- PDF and Excel land as a Gmail draft.
+- Everything starts with `docker compose up`.
 
-## Etapy
+## Stages
 
-| Etap | Zakres |
+| Stage | Scope |
 | --- | --- |
-| MVP | Import i czyszczenie CSV z ING, deduplikacja, sprzedawcy, reguły, klasyfikator ML, przegląd z podziałem paragonów i flagą osobiste, rozliczenie, PDF + Excel, szkic w Gmailu, prosty dashboard |
-| E2 Inteligencja | Warstwa LLM w kategoryzacji, Celery + Redis, ponowny trening z poprawek, MLflow i sekcja analityczna, obserwowany folder, import mBanku |
-| E3 Analityka | Trendy, anomalie, prognozy per kategoria, cechy zewnętrzne, testy wsteczne, Grafana |
-| E4 Asystent | Serwer MCP, agent z text-to-SQL, akcje z zatwierdzaniem, podsumowanie do maila, głos |
-| E5 Portfolio i rodzice | Generator danych do demo, README, publiczne repo, logowanie z rolą rodzica, Tailscale, kopie zapasowe na Raspberry Pi, skan paragonów |
+| MVP | ING CSV import and cleaning, deduplication, merchants, rules, ML classifier, review with receipt splits and personal flag, settlement, PDF + Excel, Gmail draft, basic dashboard |
+| 2 Intelligence | LLM categorization layer, Celery + Redis, retraining from corrections, MLflow and analytics section, watched folder, mBank import |
+| 3 Analytics | Trends, anomalies, per-category forecasts, external features, backtests, Grafana |
+| 4 Assistant | MCP server, text-to-SQL agent, approved actions, email summary, voice |
+| 5 Portfolio and parents | Demo data generator, README, public repo, login with a parent role, Tailscale, backups to a Raspberry Pi, receipt scanning |
 
-## Czego nie robimy
+## Non-goals
 
-- Połączeń z API banków ani agregatorów PSD2 (decyzja: tylko CSV, żadnych wycieków).
-- Chmurowych modeli LLM w aplikacji (OpenAI, Anthropic i inne).
-- Aplikacji mobilnej (na razie tylko web na komputerze).
-- Obsługi wielu walut poza kwotą w PLN podaną przez bank.
-- mBanku w MVP (wraca w etapie 2).
+- Bank APIs or PSD2 aggregators (decision: CSV only, no data leaks).
+- Cloud LLMs in the app (OpenAI, Anthropic, or others).
+- A mobile app (desktop web for now).
+- Currencies other than the PLN amount reported by the bank.
+- mBank in the MVP (returns in stage 2).

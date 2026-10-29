@@ -28,7 +28,9 @@ I buy groceries for the household and get reimbursed by my parents. Until now th
 ## Architecture
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#ffffff', 'primaryColor': '#eef2ff', 'primaryTextColor': '#111827', 'primaryBorderColor': '#6366f1', 'lineColor': '#9ca3af', 'edgeLabelBackground': '#ffffff'}}}%%
 flowchart LR
+    classDef node fill:#eef2ff,stroke:#6366f1,color:#111827
     CSV[Bank CSV] --> API[FastAPI]
     UI[React app] <--> API
     API <--> DB[(PostgreSQL + pgvector)]
@@ -48,7 +50,7 @@ flowchart LR
 Requirements: Docker Desktop, [uv](https://docs.astral.sh/uv/), Node.js LTS, Ollama, and a GPU with 8 GB VRAM recommended for the LLM features.
 
 ```bash
-git clone https://github.com/<igorkotlarz1>/skarbonka.git
+git clone https://github.com/<you>/skarbonka.git
 cd skarbonka
 docker compose up -d
 ```
@@ -63,7 +65,7 @@ docker compose up -d
 | 4 | AI assistant: MCP tools, text-to-SQL, approved actions, voice | Planned |
 | 5 | Demo mode on synthetic data, parent accounts, remote access via Tailscale | Planned |
 
-Design docs (in Polish) live in [`docs/`](docs/).
+Design docs live in [`docs/`](docs/).
 
 ## License
 

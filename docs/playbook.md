@@ -1,74 +1,74 @@
-# Jak pracować z Claude Code w tym projekcie
+# Working with Claude Code on this project
 
-## Prywatność: najważniejsza zasada
+## Privacy: the one rule that matters
 
-Claude Code działa w chmurze Anthropic: wszystko, co przeczyta (pliki, wynik komend), trafia do modelu. Dlatego:
+Claude Code runs in Anthropic's cloud: everything it reads (files, command output) is sent to the model. So:
 
-- Prawdziwe CSV leżą tylko w `data/` (w `.gitignore`).
-- `.claude/settings.json` blokuje odczyt `data/`, a hook `.claude/hooks/block_raw_data.py` blokuje każde narzędzie (Bash, Read, Grep, Glob, Edit, Write), którego argumenty wskazują `data/`. Grep i Glob dodatkowo pomijają pliki z `.gitignore`.
-- Komendy na prawdziwych danych (`uv run skarbonka inspect data/...`, trening modelu) uruchamiasz w **osobnym terminalu**, nie przez `!` w Claude Code, bo wynik `!` trafia do rozmowy. Wklejasz tylko statystyki.
-- Hook wymaga `python3`, więc uruchamiaj Claude Code w WSL2 (tam, gdzie leży repo).
+- Real CSVs live only in `data/` (gitignored).
+- `.claude/settings.json` denies reading `data/`, and the hook `.claude/hooks/block_raw_data.py` blocks any tool (Bash, Read, Grep, Glob, Edit, Write) whose arguments point at `data/`. Grep and Glob also skip gitignored files.
+- Run commands on real data (`uv run skarbonka inspect data/...`, model training) in a **separate terminal**, not via `!` in Claude Code, because `!` output goes into the conversation. Paste only stats.
+- The hook needs `python3`, so run Claude Code inside WSL2, where the repo lives.
 
-Sprawdzenie, że ochrona działa: w Claude Code wpisz „pokaż pierwszą linię pliku z katalogu data”. Powinieneś zobaczyć komunikat „Blocked: data/ holds real bank exports…”. Komenda `/hooks` pokazuje, że hook jest aktywny.
+Check the guard: ask Claude Code to "show the first line of a file in data". You should see "Blocked: data/ holds real bank exports…". `/hooks` shows the hook is active.
 
-## Rytm sesji
+## Session rhythm
 
-1. `/clear` (świeży kontekst, zero kosztu starej rozmowy).
-2. `/start-sesji N`: Claude czyta tylko ostatni wpis z `docs/progress.md` i sekcję SN z `docs/plan-sesji.md`, proponuje plan i czeka.
-3. Akceptujesz plan albo poprawiasz go jednym zdaniem.
-4. Praca w małych krokach: test, kod, test. Gdy Claude idzie w złą stronę, od razu `Esc`, a `Esc Esc` (lub `/rewind`) cofa do wcześniejszego punktu.
-5. `/koniec-sesji`: testy, lint, wpis do dziennika, propozycja commita. Commitujesz.
+1. `/clear` (fresh context; the old conversation costs nothing).
+2. `/start-session N`: reads only the last entry of `docs/progress.md` and section SN of `docs/session-plan.md`, proposes a plan, and waits.
+3. Approve the plan or fix it in one sentence.
+4. Work in small steps: test, code, test. If Claude goes the wrong way, press `Esc` right away; `Esc Esc` (or `/rewind`) restores an earlier point.
+5. `/end-session`: tests, lint, progress entry, commit message proposal. You commit.
 
-## Oszczędzanie tokenów
+## Saving tokens
 
-| Nawyk | Dlaczego |
+| Habit | Why |
 | --- | --- |
-| `/clear` między sesjami i niepowiązanymi zadaniami | Każda wiadomość wysyła całą dotychczasową rozmowę |
-| `/rename` przed `/clear`, potem `/resume` | Możesz wrócić do starej sesji, nie trzymając jej otwartej |
-| Po dłuższej przerwie raczej nowa sesja niż kontynuacja | Pierwsza wiadomość po przerwie przetwarza cały kontekst od nowa (wygasa cache) |
-| Plan mode (`Shift+Tab`) na start zadania | Tańsze niż poprawianie kodu napisanego w złą stronę |
-| Sonnet domyślnie, Opus tylko w S4 i S6 (`/model`) | Sonnet wystarcza do większości kodu i jest tańszy |
-| Niższy `/effort` przy prostych zadaniach | Mniej tokenów myślenia |
-| Konkretne prompty z nazwami plików | Claude nie przeszukuje całego repo |
-| Testy pojedynczego pliku z `-q` | Krótkie wyjście, mniej kontekstu |
-| `/compact` z instrukcją, gdy sesja się wydłuża | Np. `/compact zostaw zadanie, zmienione pliki i błędy testów` |
-| `/usage` i `/context` co jakiś czas | Widzisz, co zjada limit i kontekst |
-| Wyłącz nieużywane serwery MCP (`/mcp`) | Każdy dodaje coś do kontekstu |
-| Bez subagentów i zespołów agentów w tym projekcie | Każdy agent to osobny kontekst i osobne koszty |
-| CLAUDE.md krótki (ok. 60 linii) | Ładuje się przy każdej sesji. Wiedza domenowa leży w `docs/context.md` i jest czytana tylko w razie potrzeby |
+| `/clear` between sessions and unrelated tasks | Every message resends the whole conversation |
+| `/rename` before `/clear`, then `/resume` | Return to an old session without keeping it open |
+| After a long break, prefer a new session | The first message after a break reprocesses the whole context (cache expired) |
+| Plan mode (`Shift+Tab`) at the start of a task | Cheaper than fixing code written in the wrong direction |
+| Sonnet by default, Opus only in S4 and S6 (`/model`) | Sonnet handles most code and costs less |
+| Lower `/effort` for simple tasks | Fewer thinking tokens |
+| Specific prompts with file names | Claude doesn't search the whole repo |
+| Single-file tests with `-q` | Short output, less context |
+| `/compact` with instructions when a session grows | e.g. `/compact keep the task, changed files and test errors` |
+| Check `/usage` and `/context` now and then | See what eats your limit and context |
+| Disable unused MCP servers (`/mcp`) | Each adds to the context |
+| No subagents or agent teams on this project | Each agent is a separate context and separate cost |
+| Short CLAUDE.md (about 50 lines) | Loaded every session; domain knowledge lives in `docs/context.md`, read only when needed |
 
-## Skille
+## Skills
 
-Skill to folder z plikiem `SKILL.md`. Claude zna tylko jego opis, a pełną treść ładuje dopiero przy użyciu, więc nie kosztuje dużo, dopóki go nie wywołasz. Wywołujesz go ręcznie przez `/nazwa` albo Claude sam po niego sięga, gdy pasuje do zadania (chyba że skill ma `disable-model-invocation: true`, jak nasze dwa).
+A skill is a folder with a `SKILL.md` file. Claude sees only its description and loads the full text when it's used, so it costs little until invoked. Invoke one by typing `/name`, or Claude picks it up when it fits the task (unless the skill sets `disable-model-invocation: true`, like our two).
 
-Gdzie leżą: projektowe w `.claude/skills/<nazwa>/SKILL.md` (w repo), osobiste w `~/.claude/skills/`, z wtyczek instalowanych przez `/plugin`. Pełna lista: wpisz `/` w Claude Code.
+Where they live: project skills in `.claude/skills/<name>/SKILL.md` (in the repo), personal ones in `~/.claude/skills/`, and plugin skills installed with `/plugin`. Type `/` in Claude Code to see the full list.
 
-### Nasze skille projektowe (w paczce)
+### Project skills (in the starter pack)
 
-| Skill | Kiedy |
+| Skill | When |
 | --- | --- |
-| `/start-sesji N` | Początek każdej sesji z planu |
-| `/koniec-sesji` | Koniec każdej sesji |
+| `/start-session N` | Start of every planned session |
+| `/end-session` | End of every session |
 
-### Wbudowane, które się przydadzą
+### Built-in skills worth using
 
-| Skill | Kiedy w tym projekcie |
+| Skill | When on this project |
 | --- | --- |
-| `/code-review` | Przed scaleniem większej zmiany, szczególnie parsera i rozliczeń |
-| `/simplify` | Po skończonej funkcji, żeby uprościć kod bez szukania błędów |
-| `/security-review` | Przed upublicznieniem repo (E5) i po dodaniu Gmail API oraz text-to-SQL (E4) |
-| `/debug` | Gdy coś nie działa i przyczyna nie jest oczywista |
-| `/fewer-permission-prompts` | Po kilku sesjach: dopisuje bezpieczne komendy do listy dozwolonych |
+| `/code-review` | Before merging bigger changes, especially the parser and settlements |
+| `/simplify` | After finishing a feature, to simplify without bug hunting |
+| `/security-review` | Before making the repo public (stage 5) and after adding Gmail API and text-to-SQL (stage 4) |
+| `/debug` | When something breaks and the cause isn't obvious |
+| `/fewer-permission-prompts` | After a few sessions: adds safe commands to the allow list |
 
-`/init` pomijamy, bo `CLAUDE.md` już jest.
+Skip `/init`: `CLAUDE.md` already exists.
 
-### Z wtyczek (opcjonalnie)
+### From plugins (optional)
 
-- `skill-creator` (`/plugin install skill-creator@claude-plugins-official`): pomaga pisać własne skille. Przyda się w E2 do skilla „nowy bank” przy dodawaniu mBanku.
-- Pozostałe przeglądasz komendą `/plugin`. Instaluj tylko to, czego naprawdę używasz, bo opis każdego skilla jest w kontekście przy każdej wiadomości. `/skill-doctor` pokazuje, które skille są kosztowne lub nieużywane.
+- `skill-creator` (`/plugin install skill-creator@claude-plugins-official`): helps write your own skills. Useful in stage 2 for a "new bank" skill when adding mBank.
+- Browse the rest with `/plugin`. Install only what you actually use, because every skill's description is in context on every message. `/skill-doctor` shows which skills are costly or unused.
 
-### Własne skille na później
+### Your own skills, later
 
-- `nowa-migracja`: schemat zmiany modelu, migracja Alembic, test migracji w górę i w dół.
-- `nowy-bank` (E2): checklista dodania parsera banku (generator fixtures, parser, `inspect`, testy).
-- `ewaluacja-modelu` (E2/E3): uruchom ewaluację, zapisz do MLflow, porównaj z aktywnym modelem.
+- `new-migration`: model change, Alembic migration, upgrade and downgrade test.
+- `new-bank` (stage 2): checklist for adding a bank parser (fixture generator, parser, `inspect`, tests).
+- `evaluate-model` (stages 2–3): run evaluation, log to MLflow, compare with the active model.

@@ -44,7 +44,8 @@ Planned for M3.5 (travel summaries only, never in the parents' settlement). Base
 - Exported from the app per currency pocket or for all pockets. Expected columns: `Type`, `Product`, `Started Date`, `Completed Date`, `Description`, `Amount`, `Fee`, `Currency`, `State`, `Balance`.
 - `Type` values seen publicly: `CARD_PAYMENT`, `TRANSFER`, `EXCHANGE`, `TOPUP`, `CARD_REFUND`, `ATM`, `FEE`. `State`: `COMPLETED`, `PENDING`, `REVERTED`, `DECLINED`.
 - Amounts in the pocket currency with a decimal point; fees in a separate column. No exchange rate column since 2021.
-- The owner holds pockets in EUR, GBP, PLN, SEK, DKK, NOK and CZK.
+- The owner holds pockets in EUR, GBP, PLN, SEK, DKK, NOK and CZK; subscriptions are also charged in USD.
+- Classification: all Revolut spending is travel except recurring subscriptions (AI tools, API credits), which are reported separately.
 
 ## Currency conversion
 
@@ -120,6 +121,6 @@ Starting "personal" rules: Żabka, Gym, Booking. The tree awaits the owner's con
 | Gmail draft instead of auto-send in the MVP | Control over what reaches the parents |
 | MVP with ING only | mBank returns in stage 2 |
 | Revolut via CSV export (M3.5), not an API | Revolut has no API for personal accounts; Open Banking would need an aggregator |
-| NBP rates for currency conversion | Official PLN reference, free; requests contain only currency codes and dates |
+| NBP rates for currency conversion, also for the EUR view | Official PLN reference, one source, free; requests contain only currency codes and dates |
 | Travel spending never enters a settlement | Settlements stay ING-only; Revolut is for personal travel summaries |
 | UI and reports in Polish, code and docs in English | Users are Polish; repo is a public portfolio and English saves tokens |

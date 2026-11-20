@@ -68,12 +68,13 @@ Gate rules: synthetic fixtures only; no `skip` for a missing service (a missing 
 Travel spending from Revolut, summarised in PLN and EUR. It never enters the parents' settlement (settlements stay ING-only).
 
 **Gate**
-- Revolut fixtures (EUR, GBP, PLN, SEK, DKK, NOK, CZK) parse: columns by name, amounts as `Decimal` in the account currency, `Started`/`Completed` dates as `date`, fee separate from amount.
+- Revolut fixtures (EUR, GBP, PLN, SEK, DKK, NOK, CZK, plus USD for subscriptions) parse: columns by name, amounts as `Decimal` in the account currency, `Started`/`Completed` dates as `date`, fee separate from amount.
 - Only `COMPLETED` rows are imported; `PENDING`, `REVERTED` and `DECLINED` are counted in a warning, not imported.
 - Exchanges between own pockets and top-ups are flagged `internal` and excluded from spending totals (an exchange appears as two rows, one per currency).
 - NBP client: for a transaction date, the rate is table A mid from the **last business day before** that date (weekends and Polish holidays roll back). Tested on recorded JSON responses; the test suite makes no network calls.
 - The rate cache lives outside the repo (`~/.cache/skarbonka/fx/`), is reused offline, and one request covers a range (≤ 93 days per NBP query).
 - Conversion: PLN amount = original × rate, rounded half-up to the grosz **per transaction**, then summed. EUR view = PLN amount ÷ EUR rate of the same day (NBP cross rate). The original amount and currency are never overwritten.
+- Trip classification: every Revolut spending row counts as travel **except recurring subscriptions** (e.g. AI and API credits in EUR or USD), detected by a vendor list plus a monthly-repeat rule; subscriptions are reported separately, never in a trip total.
 - `skarbonka trip-summary` prints per-currency totals, PLN total, EUR total, fees, internal transfers excluded, and the rate dates used, but no counterparty or description.
 - `inspect` recognizes a Revolut file and prints Revolut stats; the ING path is unchanged (M3 gate stays green).
 
@@ -88,7 +89,7 @@ Travel spending from Revolut, summarised in PLN and EUR. It never enters the par
 - **Rounding.** Converting per row and summing differs from converting the sum by a few grosze. The gate fixes per-row rounding; the summary shows it.
 - **Schema impact on M4.** Transactions must carry `currency` and the original amount from the start; PLN and EUR values are derived (computed or cached), never stored as the only amount.
 
-**Owner**: export one real Revolut statement (all pockets) and run `uv run skarbonka inspect ../data/<file>.csv` in your own terminal; paste only the output. Decide what a "trip" is (a date range plus a name is the proposal) and whether the EUR view should use NBP cross rates or ECB reference rates.
+**Owner**: export one real Revolut statement (all pockets) and run `uv run skarbonka inspect ../data/<file>.csv` in your own terminal; paste only the output. Decided 2026-11-20: EUR view uses NBP rates (one source); all Revolut spending is travel except recurring subscriptions, and vendor names drive the split. Still open: grouping travel rows into named trips (proposal: gaps of several days without foreign spending split trips; the owner can rename and adjust).
 
 ## M4. Schema and import (Opus)
 

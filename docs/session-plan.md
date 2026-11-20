@@ -123,3 +123,11 @@ Requirements: MVP success metrics in docs/goals.md, NFR-12, NFR-13.
 > Go through the MVP success metrics in docs/goals.md: add missing tests (parser and settlement coverage at least 90%), a regression test "same total as the old notebook" on a fixture, and README setup instructions. List anything that still fails the criteria.
 
 Done when: you do your first real settlement without the notebook.
+
+## S14. Home server deployment
+
+Requirements: `docs/deployment.md`.
+
+> Add a production compose file for the OptiPlex (API serving the built frontend, Postgres without a published port), a Tailscale setup guide in `docs/deployment.md`, the local-only LLM URL guard with its gate test, and an encrypted `pg_dump` backup script with a scripted restore test. The LLM endpoint is configuration only.
+
+Done when: Skarbonka runs on the OptiPlex, opens from your phone over Tailscale, and a backup restores into a scratch database.

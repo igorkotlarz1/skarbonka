@@ -75,9 +75,20 @@ If anything is red, go back to step 4 unless the cause is outside scope; then sa
 2. If a hard part is likely to bite again (a format quirk, a library limit), add one line to `## Known issues` at the bottom of `docs/milestones.md`.
 3. Write the brief to `docs/briefs/MNN.md` (template below) and print it in full.
 
-## 7. Commit → APPROVAL GATE 2
+## 7. Commit and PR → APPROVAL GATE 2
 
-Show `git status --short` and one conventional commit message (e.g. `feat(importers): ING parser with metadata validation (M3)`). Do not commit, push or open a PR until the owner says so. After the commit, remind them of the owner actions from the brief.
+Show `git status --short` and one conventional commit message (e.g. `feat(importers): ING parser with metadata validation (M3)`). Do not commit, push or open a PR until the owner says so. Then push a branch `feat/mN-<slug>` and open one PR per milestone, with an English description in this shape:
+
+- `## 🐷 MN · <Title>`, then a 2–3 sentence lead: what this unlocks;
+- `### ✨ What's inside`: a table of Area → what you get;
+- `### 🧪 Milestone gate`: the gate file and one bullet per behaviour it proves;
+- `### 🚀 Try it`: copy-paste commands;
+- `### 🌰 Lessons from practice`: the hard-parts list, honestly;
+- `### 👀 Needs your eyes`: owner actions, if any;
+- `### ✅ Checks`: a checklist with real results;
+- a link to the Polish brief.
+
+The owner reviews and merges. Never merge yourself. After the PR is open, remind them of the owner actions from the brief.
 
 ## Brief template (Polish; this is the only Polish document in docs/)
 

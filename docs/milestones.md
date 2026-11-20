@@ -245,7 +245,7 @@ Travel spending from Revolut, summarised in PLN and EUR. It never enters the par
 - Backup script round trip on the test DB: dump, encrypt, decrypt, restore into a scratch DB, row counts equal.
 
 **Hard parts**
-- If Skarbonka goes through LiteLLM, the guard cannot see where LiteLLM routes. The local-only key and the absence of cloud fallbacks must be checked by the owner on the server.
+- The LLM URL points straight at the GPU PC (decided); a LiteLLM URL must not be configured, because the guard cannot see where LiteLLM routes.
 - Docker on a host with Tailscale: binding to the tailnet IP before `tailscaled` is up fails at boot; needs a startup order or binding to the LAN IP.
 
 **Owner**: install Ubuntu Server, Docker and Tailscale on the OptiPlex; run the deploy; open the app from the phone; pick and test the backup target.

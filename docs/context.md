@@ -118,6 +118,7 @@ Starting "personal" rules: Żabka, Gym, Booking. The tree awaits the owner's con
 | Postgres as source of truth, DuckDB for analytics | Postgres for the app, DuckDB convenient in notebooks |
 | LLM on the GPU PC behind an OpenAI-compatible API | Runtime can change (llama.cpp, Ollama, LiteLLM) without code changes; the GPU PC may sleep |
 | App on an always-on home server, Tailscale only | 24/7 access without exposing anything to the internet; no Cloudflare Tunnel because it terminates TLS |
+| Skarbonka calls the GPU PC directly, not the LiteLLM gateway | The gateway also routes to cloud models; a fallback would leak transaction text |
 | No cloud fallback when the GPU PC is off | Rows wait in `pending_llm`; financial text never goes to a cloud model |
 | React instead of Streamlit | Nicer UI, future parent accounts, learning frontend |
 | Gmail draft instead of auto-send in the MVP | Control over what reaches the parents |

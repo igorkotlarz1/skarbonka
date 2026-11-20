@@ -23,7 +23,7 @@ Skarbonka never depends on the GPU PC being awake for anything except the option
 
 - The app talks **OpenAI-compatible `chat.completions`** to a configurable endpoint: `SKARBONKA_LLM_BASE_URL`, `SKARBONKA_LLM_MODEL`. This works with `llama-server`, Ollama (`/v1`) and LiteLLM alike, so the runtime can change without code changes.
 - **Local-only guard:** at startup the app refuses an LLM base URL whose host is not loopback, a private range (RFC 1918), the Tailscale range (100.64.0.0/10) or a `*.ts.net` name. A gate test covers it. This makes "no financial data to cloud models" a check, not a promise.
-- **Open: direct vs. LiteLLM.** The owner's gateway on the OptiPlex mixes local aliases with cloud ones (DeepSeek, Kimi, OpenRouter). Recommended: Skarbonka calls the GPU PC directly. If it goes through LiteLLM, it gets its own virtual key whose model allowlist holds only local aliases, with no `fallbacks` to cloud models for those aliases (a fallback would silently send transaction text to a cloud API). The guard above cannot see past LiteLLM, so this config is part of the security boundary.
+- **Decided (2026-11-20): Skarbonka calls the GPU PC directly**, not through the owner's LiteLLM gateway. That gateway also routes to cloud models (DeepSeek, Kimi, OpenRouter), and a fallback there would silently send transaction text to a cloud API that the guard above cannot see. Direct access keeps privacy a property the app can test.
 - LLM tracing (e.g. Langfuse) stores prompts, which contain transaction descriptions. Off by default; if enabled, self-hosted only.
 
 ## When the GPU PC is asleep
@@ -53,7 +53,6 @@ Skarbonka never depends on the GPU PC being awake for anything except the option
 
 ## Open questions for the owner
 
-1. Direct to the GPU PC, or through LiteLLM with a local-only key?
-2. OptiPlex variant, RAM and disk size (sets the RAM budget next to LiteLLM and Open WebUI).
-3. Backup target.
-4. `llama-server` or Ollama as the runtime on the PC (the app does not care; the docs and the setup guide do).
+1. OptiPlex variant, RAM and disk size (sets the RAM budget next to LiteLLM and Open WebUI).
+2. Backup target.
+3. `llama-server` or Ollama as the runtime on the PC (the app does not care; the docs and the setup guide do).

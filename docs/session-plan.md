@@ -38,11 +38,19 @@ Requirements: FR-02 to FR-11.
 
 Done when: tests are green and you ran `inspect` on a real file **in your own terminal** (not via `!` in Claude Code) and the numbers match the bank. You may paste the `inspect` output into Claude Code.
 
+## S3.5. Revolut travel import and currency conversion
+
+Requirements: new (travel summaries, not part of the parents' settlement). Status: planned, not started.
+
+> Using "Revolut CSV format" and "Currency conversion" in docs/context.md, add a Revolut statement parser in `backend/src/skarbonka/importers/revolut.py` (pure functions, same `ParseResult` style as ING): one file per currency account or a combined export, columns found by name, only `COMPLETED` rows imported (others counted), fees kept separately, own-pocket exchanges and top-ups flagged internal. Add an FX module in `backend/src/skarbonka/fx/`: an NBP client (table A mid rates, previous business day rule), a local cache outside the repo, and pure conversion helpers (PLN and EUR via PLN cross rates). Add a synthetic Revolut generator and fixtures for EUR, GBP, PLN, SEK, DKK, NOK and CZK. CLI: `skarbonka inspect` detects Revolut files; `skarbonka trip-summary --from --to FILES` prints totals per currency, in PLN and in EUR, without rows. No database yet: M4 stores it. Tests first; the NBP client is tested against recorded responses, never the live API. Plan first.
+
+Done when: a synthetic multi-currency trip summary matches a hand calculation to the grosz and you ran `inspect` and `trip-summary` on a real Revolut export in your own terminal.
+
 ## S4. Database schema and import (Opus)
 
 Requirements: FR-01, FR-09, FR-10, FR-14, FR-16, NFR-04, NFR-05.
 
-> Design SQLAlchemy models and the first Alembic migration for: accounts, import_batches, raw_rows, transactions, merchants, merchant_aliases, categories, rules, allocations, settlements, audit_log (see "Data model" in docs/context.md). Then the import service: file → parser → dedup by transaction number or fingerprint → store transactions with one allocation each → import stats. Endpoints `POST /imports` (multiple files) and `GET /imports`. Integration tests against Postgres in Docker. Plan and schema first, for approval.
+> Design SQLAlchemy models and the first Alembic migration (currency-aware from the start: every amount keeps its original currency, see S3.5) for: accounts, import_batches, raw_rows, transactions, merchants, merchant_aliases, categories, rules, allocations, settlements, audit_log (see "Data model" in docs/context.md). Then the import service: file → parser → dedup by transaction number or fingerprint → store transactions with one allocation each → import stats. Endpoints `POST /imports` (multiple files) and `GET /imports`. Integration tests against Postgres in Docker. Plan and schema first, for approval.
 
 Done when: importing a fixture twice yields 0 duplicates and the import history shows the counts.
 

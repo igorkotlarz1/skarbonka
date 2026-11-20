@@ -37,6 +37,22 @@ Based on an anonymized "Lista transakcji" export (2026-03):
 - `Tytuł`: e.g. ` Płatność kartą 21.02.2026 Nr karty 4246xx1234`.
 - `Konto`: account name (e.g. `KONTO Mobi 18-26`). One file can hold several accounts (e.g. Mobi and Otwarte Konto Oszczędnościowe); transfers between them are internal.
 
+## Revolut CSV format (to confirm)
+
+Planned for M3.5 (travel summaries only, never in the parents' settlement). Based on public descriptions of the personal statement export, not yet on the owner's file:
+
+- Exported from the app per currency pocket or for all pockets. Expected columns: `Type`, `Product`, `Started Date`, `Completed Date`, `Description`, `Amount`, `Fee`, `Currency`, `State`, `Balance`.
+- `Type` values seen publicly: `CARD_PAYMENT`, `TRANSFER`, `EXCHANGE`, `TOPUP`, `CARD_REFUND`, `ATM`, `FEE`. `State`: `COMPLETED`, `PENDING`, `REVERTED`, `DECLINED`.
+- Amounts in the pocket currency with a decimal point; fees in a separate column. No exchange rate column since 2021.
+- The owner holds pockets in EUR, GBP, PLN, SEK, DKK, NOK and CZK.
+
+## Currency conversion
+
+- Reference rates: NBP table A mid rates (`api.nbp.pl`, free, no key). Rule: the rate from the last business day before the transaction date. The request carries only a currency code and a date range, never a transaction.
+- PLN value per transaction = original × rate, rounded to the grosz; totals are sums of rounded values. EUR view: PLN value ÷ EUR rate of the same day.
+- Rates are cached locally (`~/.cache/skarbonka/fx/`) so the app works offline after the first fetch.
+- Original amount and currency are always kept; converted values are derived.
+
 ## Old notebook (`tracker.ipynb`), to be replaced
 
 - `pd.read_csv(skiprows=20, skipfooter=3, usecols=[0,2,8], encoding='latin_1')`: hardcoded line counts and the wrong encoding (breaks Polish characters).
@@ -103,4 +119,7 @@ Starting "personal" rules: Żabka, Gym, Booking. The tree awaits the owner's con
 | React instead of Streamlit | Nicer UI, future parent accounts, learning frontend |
 | Gmail draft instead of auto-send in the MVP | Control over what reaches the parents |
 | MVP with ING only | mBank returns in stage 2 |
+| Revolut via CSV export (M3.5), not an API | Revolut has no API for personal accounts; Open Banking would need an aggregator |
+| NBP rates for currency conversion | Official PLN reference, free; requests contain only currency codes and dates |
+| Travel spending never enters a settlement | Settlements stay ING-only; Revolut is for personal travel summaries |
 | UI and reports in Polish, code and docs in English | Users are Polish; repo is a public portfolio and English saves tokens |

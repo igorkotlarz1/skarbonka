@@ -1,6 +1,6 @@
 # Session plan: MVP (ING only)
 
-One session = one task, about 2–3 h. Start each with `/clear` and `/start-session N`, finish with `/end-session`. Requirement IDs (FR, NFR) refer to the requirements doc.
+One session = one milestone, about 2–3 h. Start each with `/clear` and `/milestone-skarbonka N`. Pytest gates and known hard parts per milestone: `docs/milestones.md`. Requirement IDs (FR, NFR) refer to the requirements doc.
 
 Model: Sonnet by default. Opus only where marked (schema design, ML). Switch with `/model`.
 
@@ -8,7 +8,7 @@ Model: Sonnet by default. Opus only where marked (schema design, ML). Switch wit
 
 ## S0. Setup (no Claude Code)
 
-- Create a private GitHub repo and clone it inside WSL2, e.g. `~/code/skarbonka` (WSL filesystem, not `C:`, so Docker is much faster).
+- Create a private GitHub repo and clone it inside WSL2, e.g. `~/projects/skarbonka` (WSL filesystem, not `C:`, so Docker is much faster).
 - Copy the starter pack contents to the repo root: `CLAUDE.md`, `README.md`, `LICENSE`, `.gitignore`, `docs/`, `.claude/`.
 - Install Docker Desktop (WSL2 backend), uv, Node.js LTS, Ollama for Windows, and Claude Code in WSL.
 - Create `data/` and put real ING CSVs there. Check `git status`: `data/` must not appear.

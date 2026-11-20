@@ -26,8 +26,10 @@ Python 3.12, uv, FastAPI, Pydantic v2, SQLAlchemy 2.0 (typed, `Mapped[...]`), Al
 
 - Tests: `uv run pytest -q path/to/test_file.py` (run only what you touched; full suite at the end of a session)
 - Lint and format: `uv run ruff check --fix . && uv run ruff format .`
-- Types: `uv run mypy src`
+- Types: `uv run mypy src tests`
+- Milestone gates: `uv run pytest -q tests/milestones` (all must stay green)
 - DB: `docker compose up -d db` (repo root), migrations `uv run alembic upgrade head`
+- Pre-commit (once, repo root): `uv run --project backend pre-commit install`
 - Frontend (in `frontend/`): `npm run dev`, `npm run lint`, `npm run build`
 
 ## Conventions

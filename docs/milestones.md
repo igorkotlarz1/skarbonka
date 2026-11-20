@@ -212,3 +212,7 @@ Gate rules: synthetic fixtures only; no `skip` for a missing service (a missing 
 ## Known issues
 
 Appended by `/milestone-skarbonka` when a hard part is likely to bite again. One line each: date, milestone, issue, workaround.
+
+- 2026-11-20 M1: the privacy hook scans every tool input, including file contents written by Edit/Write. Never write the raw-folder name followed by a slash literally in code, tests or docs that Claude Code edits; build it at runtime (`"da" + "ta"`) or the edit is blocked.
+- 2026-11-20 M1: Starlette's TestClient warns that `httpx` is deprecated in favour of `httpx2`. Harmless for now; switch only after checking the package and approving the dependency.
+- 2026-11-20 M1: `alembic -x url=...` must come before the subcommand (`alembic -x url=... upgrade head`).

@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      db:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: skarbonka
+          POSTGRES_PASSWORD: skarbonka
+          POSTGRES_DB: skarbonka
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U skarbonka"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      SKARBONKA_DATABASE_URL: postgresql+psycopg://skarbonka:skarbonka@localhost:5432/skarbonka
+      SKARBONKA_TEST_DATABASE_URL: postgresql+psycopg://skarbonka:skarbonka@localhost:5432/skarbonka
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: Install
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Types
+        run: uv run mypy src tests
+      - name: Migrations
+        run: uv run alembic upgrade head
+      - name: Milestone gates
+        run: uv run pytest -q tests/milestones
+      - name: Full test suite
+        run: uv run pytest -q
+
+  bank-files-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No bank exports or reports outside fixtures
+        run: |
+          found=$(git ls-files | grep -Ei '\.(csv|xlsx|xls|pdf)$' | grep -v '^backend/tests/fixtures/' || true)
+          if [ -n "$found" ]; then echo "Committed bank-like files:"; echo "$found"; exit 1; fi

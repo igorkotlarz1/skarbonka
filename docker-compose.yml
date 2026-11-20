@@ -1,0 +1,25 @@
+# Local services. Start the database with: docker compose up -d db
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: skarbonka-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-skarbonka}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-skarbonka}
+      POSTGRES_DB: ${POSTGRES_DB:-skarbonka}
+      TZ: Europe/Warsaw
+      PGTZ: Europe/Warsaw
+    ports:
+      # Bound to localhost only: the database is never exposed to the network.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:

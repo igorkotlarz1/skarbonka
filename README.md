@@ -45,14 +45,20 @@ flowchart LR
 
 ## Getting started
 
-> Work in progress: setup instructions land with the first runnable version.
+> Early development: the backend skeleton runs; features land milestone by milestone.
 
-Requirements: Docker Desktop, [uv](https://docs.astral.sh/uv/), Node.js LTS, Ollama, and a GPU with 8 GB VRAM recommended for the LLM features.
+Requirements: Docker (Engine or Desktop), [uv](https://docs.astral.sh/uv/), Node.js LTS (from the frontend milestone on), and later Ollama with a GPU with 8 GB VRAM for the LLM features.
 
 ```bash
 git clone https://github.com/igorkotlarz1/skarbonka.git
 cd skarbonka
-docker compose up -d
+cp .env.example .env
+docker compose up -d db
+cd backend
+uv sync
+uv run alembic upgrade head
+uv run pytest -q
+uv run uvicorn skarbonka.api.main:app --reload   # http://localhost:8000/health
 ```
 
 ## Roadmap

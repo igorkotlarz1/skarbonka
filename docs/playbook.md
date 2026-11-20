@@ -14,10 +14,12 @@ Check the guard: ask Claude Code to "show the first line of a file in data". You
 ## Session rhythm
 
 1. `/clear` (fresh context; the old conversation costs nothing).
-2. `/start-session N`: reads only the last entry of `docs/progress.md` and section SN of `docs/session-plan.md`, proposes a plan, and waits.
+2. `/milestone-skarbonka N`: reads the last progress entry, section SN of `docs/session-plan.md` and MN of `docs/milestones.md`, checks that earlier gates are green, proposes a plan with the gate tests, and waits.
 3. Approve the plan or fix it in one sentence.
-4. Work in small steps: test, code, test. If Claude goes the wrong way, press `Esc` right away; `Esc Esc` (or `/rewind`) restores an earlier point.
-5. `/end-session`: tests, lint, progress entry, commit message proposal. You commit.
+4. Claude writes the gate tests first (red), then implements in small steps until they are green. It stops and asks on new dependencies, architecture changes, a gate test that looks wrong, or anything needing real data. If it goes the wrong way, press `Esc` right away; `Esc Esc` (or `/rewind`) restores an earlier point.
+5. It runs all checks, logs progress, writes a Polish brief to `docs/briefs/MNN.md`, and proposes a commit. You commit.
+
+`/milestone-skarbonka status` shows where the project stands; `/milestone-skarbonka brief N` re-prints a brief. `/start-session` and `/end-session` remain for small ad-hoc sessions outside the milestone plan.
 
 ## Saving tokens
 
@@ -47,8 +49,9 @@ Where they live: project skills in `.claude/skills/<name>/SKILL.md` (in the repo
 
 | Skill | When |
 | --- | --- |
-| `/start-session N` | Start of every planned session |
-| `/end-session` | End of every session |
+| `/milestone-skarbonka N` | Every planned milestone, end to end, with pytest gates and a brief |
+| `/milestone-skarbonka status` | Where the project stands |
+| `/start-session N`, `/end-session` | Small ad-hoc sessions outside the plan |
 
 ### Built-in skills worth using
 

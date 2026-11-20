@@ -1,6 +1,6 @@
 # Skarbonka
 
-Local-first app that imports ING bank CSV exports, categorizes transactions (rules → ML → local LLM), lets the owner mark personal spending, and produces a settlement (PDF + Excel + Gmail draft) for the owner's parents. Goals: `docs/goals.md`. Domain, CSV format, decisions: `docs/context.md` (read only when you need domain knowledge). Session plan: `docs/session-plan.md`. Progress log: `docs/progress.md`.
+Local-first app that imports ING bank CSV exports, categorizes transactions (rules → ML → local LLM), lets the owner mark personal spending, and produces a settlement (PDF + Excel + Gmail draft) for the owner's parents. Goals: `docs/goals.md`. Domain, CSV format, decisions: `docs/context.md` (read only when you need domain knowledge). Session plan: `docs/session-plan.md`. Milestone gates and hard parts: `docs/milestones.md`. Progress log: `docs/progress.md`.
 
 ## Hard rules
 
@@ -26,13 +26,15 @@ Python 3.12, uv, FastAPI, Pydantic v2, SQLAlchemy 2.0 (typed, `Mapped[...]`), Al
 
 - Tests: `uv run pytest -q path/to/test_file.py` (run only what you touched; full suite at the end of a session)
 - Lint and format: `uv run ruff check --fix . && uv run ruff format .`
-- Types: `uv run mypy src`
+- Types: `uv run mypy src tests`
+- Milestone gates: `uv run pytest -q tests/milestones` (all must stay green)
 - DB: `docker compose up -d db` (repo root), migrations `uv run alembic upgrade head`
+- Pre-commit (once, repo root): `uv run --project backend pre-commit install`
 - Frontend (in `frontend/`): `npm run dev`, `npm run lint`, `npm run build`
 
 ## Conventions
 
-- Code, comments, docs, commit messages, and README in English. UI strings, category names, and reports in Polish.
+- Code, comments, docs, commit messages, and README in English. UI strings, category names, reports, and milestone briefs (`docs/briefs/`) in Polish.
 - Conventional commits (`feat:`, `fix:`, `test:`, `chore:`, `docs:`).
 - Parsers and money logic: write the test first, keep functions pure and small.
 - Ask before adding a new dependency. Prefer the standard library and what the stack already has.
@@ -40,7 +42,7 @@ Python 3.12, uv, FastAPI, Pydantic v2, SQLAlchemy 2.0 (typed, `Mapped[...]`), Al
 
 ## Working style (token budget)
 
-- One session = one task from `docs/session-plan.md`. Start with a short plan, wait for approval, then implement.
+- One session = one milestone, run with `/milestone-skarbonka N`: plan, approval, gate tests in `backend/tests/milestones/` first, implementation, checks, brief. Never commit without approval.
 - Read only the files the task needs. Do not scan the whole repo; use targeted search.
 - Do not paste long test or build output back; summarize failures (first error, file, line).
 - When the task is ambiguous, ask one concise question instead of guessing.

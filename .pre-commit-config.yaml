@@ -1,0 +1,42 @@
+# Install once, from the repo root: uv run --project backend pre-commit install
+# Tools run through uv, so their versions always match backend/uv.lock.
+repos:
+  - repo: local
+    hooks:
+      - id: no-bank-files
+        name: block CSV/XLSX/PDF outside test fixtures (real bank data stays in the raw folder)
+        language: fail
+        entry: "Bank exports and reports must not be committed. Synthetic fixtures belong in backend/tests/fixtures/."
+        files: '\.(csv|CSV|xlsx|XLSX|xls|pdf)$'
+        exclude: '^backend/tests/fixtures/'
+
+      - id: ruff-check
+        name: ruff check
+        language: system
+        entry: uv run --directory backend ruff check --fix .
+        pass_filenames: false
+        files: '^backend/.*\.py$'
+
+      - id: ruff-format
+        name: ruff format
+        language: system
+        entry: uv run --directory backend ruff format .
+        pass_filenames: false
+        files: '^backend/.*\.py$'
+
+      - id: mypy
+        name: mypy (strict)
+        language: system
+        entry: uv run --directory backend mypy src tests
+        pass_filenames: false
+        files: '^backend/.*\.py$'
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        exclude: '^backend/tests/fixtures/'

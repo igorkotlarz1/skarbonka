@@ -56,7 +56,7 @@ Gate rules: synthetic fixtures only; no `skip` for a missing service (a missing 
 - `skarbonka inspect <fixture>` prints counts, total, date range, operation types and warnings, and **no** counterparty names or titles (assert that no fixture merchant string appears in the output).
 
 **Hard parts**
-- Operation types beyond `TR.KART` (BLIK, transfers, refunds, holds) are unconfirmed. Unknown types must pass through as `UNKNOWN:<code>` and be counted in `inspect`, not rejected.
+- Operation types beyond `TR.KART` (BLIK, transfers, refunds, holds) are unconfirmed. Unknown types must pass through with their raw code and `operation_kind="unknown"`, and be counted in `inspect`, not rejected.
 - Polish number formats: `-1 234,56` may contain a non-breaking space as a thousands separator.
 - Whether `Suma obciążeń` includes holds is unknown. Validate debits and credits separately and report both.
 - Two `Waluta` columns with the same name: address columns by position after header detection, not by name.
@@ -218,3 +218,6 @@ Appended by `/milestone-skarbonka` when a hard part is likely to bite again. One
 - 2026-11-20 M1: `alembic -x url=...` must come before the subcommand (`alembic -x url=... upgrade head`).
 - 2026-11-20 M2: fixtures are byte-exact (CRLF, cp1250). `.gitattributes` marks `backend/tests/fixtures/**` as `-text`, so git with `core.autocrlf=true` (Windows) does not rewrite them. If the in-sync gate fails after a checkout on Windows, check this first.
 - 2026-11-20 M2: the metadata block layout, the operation codes other than `TR.KART`, and the newest-first row order are ASSUMPTIONS in `synthetic_ing.py` until the owner checks a real export.
+- 2026-11-20 M3: the "22 fields vs 21-field header" quirk may come from the owner's anonymization, not the bank (see the earlier sample notes). The parser does not count fields: a row is valid when its last filled cell is `Konto`, so both shapes parse. Confirm on a real export before relying on it anywhere else.
+- 2026-11-20 M3: an export without Polish characters is valid UTF-8 and is reported as `utf-8`, not `cp1250`. Harmless (the text is identical), but do not treat the reported encoding as proof of the bank's encoding.
+- 2026-11-20 M3: rows with only a hold amount are imported with `amount = hold` and counted under "Holds" in `inspect`. Whether the bank's totals include them is unknown; check the warnings on a real file with holds.

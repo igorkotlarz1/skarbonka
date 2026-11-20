@@ -18,3 +18,9 @@ Entries are appended by `/end-session`, newest at the bottom. `/start-session` r
 - Decisions: amounts built from integer grosze (no float anywhere); fixtures checked byte-for-byte against regeneration; `.gitattributes` keeps fixtures out of line-ending conversion.
 - Hard parts: metadata layout, non-card operation codes and row order are assumptions; holds (`Kwota blokady`) not generated yet. Owner to compare structure with a real export.
 - Next: M3, ING parser and `inspect`.
+
+## 2026-11-20 M3: ING parser and inspect
+- Done: `importers/ing.py` (pure: strict encoding detection without latin-1, separator detection, header found by name, positional `Waluta` binding, metadata regexes tolerant to two layouts, field cleaning, quarantine with value-free reasons, count and debit/credit validation as warnings), `skarbonka inspect` CLI printing only aggregates. Gate M3: 18 tests (46 with M1–M2).
+- Decisions: row validity is "last filled cell is Konto", not a field count; unknown operation codes pass through as kind `unknown`; hold-only rows use the hold amount.
+- Hard parts: 22 vs 21 fields may be an anonymization artefact; ASCII-only files report utf-8; hold handling unconfirmed.
+- Next: owner runs `inspect` on 2–3 real exports; then M4 (schema and import, Opus).

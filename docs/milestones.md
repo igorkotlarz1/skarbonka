@@ -216,3 +216,5 @@ Appended by `/milestone-skarbonka` when a hard part is likely to bite again. One
 - 2026-11-20 M1: the privacy hook scans every tool input, including file contents written by Edit/Write. Never write the raw-folder name followed by a slash literally in code, tests or docs that Claude Code edits; build it at runtime (`"da" + "ta"`) or the edit is blocked.
 - 2026-11-20 M1: Starlette's TestClient warns that `httpx` is deprecated in favour of `httpx2`. Harmless for now; switch only after checking the package and approving the dependency.
 - 2026-11-20 M1: `alembic -x url=...` must come before the subcommand (`alembic -x url=... upgrade head`).
+- 2026-11-20 M2: fixtures are byte-exact (CRLF, cp1250). `.gitattributes` marks `backend/tests/fixtures/**` as `-text`, so git with `core.autocrlf=true` (Windows) does not rewrite them. If the in-sync gate fails after a checkout on Windows, check this first.
+- 2026-11-20 M2: the metadata block layout, the operation codes other than `TR.KART`, and the newest-first row order are ASSUMPTIONS in `synthetic_ing.py` until the owner checks a real export.

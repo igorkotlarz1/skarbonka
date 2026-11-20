@@ -12,3 +12,9 @@ Entries are appended by `/end-session`, newest at the bottom. `/start-session` r
 - Decisions: test DB comes from SKARBONKA_TEST_DATABASE_URL (defaults to compose); a down DB fails the gate, never skips. Alembic reads the URL from settings or `-x url=`.
 - Hard parts: privacy hook scans file contents, so tests build the raw-folder path at runtime; hatchling rejects readme outside backend/; Starlette warns that httpx is deprecated for httpx2 (not switched, needs approval).
 - Next: M2, synthetic ING generator.
+
+## 2026-11-20 M2: Synthetic ING generator
+- Done: `importers/synthetic_ing.py` (reproducible generator: metadata, 21-field header, 22-field rows, footer, cp1250 or UTF-8 with BOM, card/BLIK/transfers/refund/internal transfer, seasonality, invented Katowice and Gliwice merchants), CLI to regenerate fixtures, 4 fixtures in `tests/fixtures/ing/`. Gate M2: 12 tests green (28 with M1).
+- Decisions: amounts built from integer grosze (no float anywhere); fixtures checked byte-for-byte against regeneration; `.gitattributes` keeps fixtures out of line-ending conversion.
+- Hard parts: metadata layout, non-card operation codes and row order are assumptions; holds (`Kwota blokady`) not generated yet. Owner to compare structure with a real export.
+- Next: M3, ING parser and `inspect`.

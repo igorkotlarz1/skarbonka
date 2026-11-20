@@ -1,0 +1,2 @@
+# Synthetic bank fixtures are byte-exact (CRLF, cp1250). Never let git touch them.
+backend/tests/fixtures/** -text

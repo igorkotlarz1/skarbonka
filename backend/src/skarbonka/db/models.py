@@ -117,6 +117,8 @@ class Transaction(TimestampMixin, Base):
     counterparty_account: Mapped[str] = mapped_column(String(64), default="")
     operation_code: Mapped[str] = mapped_column(String(32), default="")
     operation_kind: Mapped[str] = mapped_column(String(16), default="unknown")
+    # Derived from the counterparty at import (M5), not bank data; merchant merges move it.
+    merchant_id: Mapped[int | None] = mapped_column(ForeignKey("merchants.id"), index=True)
 
     account: Mapped[Account] = relationship()
     allocations: Mapped[list["Allocation"]] = relationship(
@@ -133,6 +135,7 @@ class Category(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
     name: Mapped[str] = mapped_column(String(100))
+    excluded_from_settlement: Mapped[bool] = mapped_column(default=False, server_default="false")
 
 
 class Merchant(TimestampMixin, Base):
@@ -141,6 +144,8 @@ class Merchant(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200), unique=True)
     default_category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
+    # Whole-word keywords that pull a counterparty into this merchant (e.g. "LIDL").
+    keywords: Mapped[list[str]] = mapped_column(JSONB, default=list, server_default="[]")
 
 
 class MerchantAlias(Base):
@@ -161,7 +166,7 @@ class Rule(TimestampMixin, Base):
     __tablename__ = "rules"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(200))
+    name: Mapped[str] = mapped_column(String(200), unique=True)
     priority: Mapped[int] = mapped_column(Integer, default=100)
     conditions: Mapped[dict[str, Any]] = mapped_column(JSONB)
     category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
@@ -207,6 +212,8 @@ class Allocation(TimestampMixin, Base):
     personal: Mapped[bool] = mapped_column(default=False)
     source: Mapped[str] = mapped_column(String(16), default="import")
     confidence: Mapped[Decimal | None] = mapped_column(Numeric(4, 3))
+    # A proposal (ML or local LLM) waiting for the owner's OK in the review queue (M8).
+    suggested_category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
     settlement_id: Mapped[int | None] = mapped_column(
         ForeignKey("settlements.id", ondelete="SET NULL"), index=True
     )

@@ -82,7 +82,7 @@ Done when: you can browse fixture transactions and mark personal ones.
 
 Requirements: FR-25, FR-26, FR-28, FR-29.
 
-> Add a "needs review" queue with keyboard shortcuts (category, personal, next) and a dialog to split a transaction into parts (amount, category, personal; parts must sum to the transaction amount). Every change goes to audit_log. After a manual correction, offer "turn this into a rule?".
+> Add a "needs review" queue with keyboard shortcuts (category, personal, next) and a dialog to split a transaction into parts (amount, category, personal; parts must sum to the transaction amount). Every change goes to audit_log. After a manual correction, offer "turn this into a rule?". For an unknown merchant, show the ML or local LLM proposal (`allocations.suggested_category_id`) as a one-key "accept" next to "choose another category"; accepting can also remember the category for the merchant.
 
 Done when: reviewing a fixture week takes a few minutes without the mouse.
 

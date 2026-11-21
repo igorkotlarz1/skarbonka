@@ -74,6 +74,32 @@ def inspect(paths: Sequence[Path]) -> int:
     return status
 
 
+def seed_command(file: Path | None) -> int:
+    """Load the category tree, merchants and rules from TOML into the database."""
+    from skarbonka.api.deps import session_factory
+    from skarbonka.categorization.seed import DEFAULT_SEED_FILE, load_seed, seed
+    from skarbonka.domain.categorize import categorize
+
+    path = file or DEFAULT_SEED_FILE
+    try:
+        config = load_seed(path)
+    except (OSError, ValueError) as exc:
+        print(f"ERROR: {path}: {exc}")
+        return 1
+    categories = sum(1 + len(c.children) for c in config.category)
+    with session_factory()() as session:
+        seed(session, config)
+        stats = categorize(session)
+        session.commit()
+    print(
+        f"Seeded from {path.name}: {categories} categories, "
+        f"{len(config.merchant)} merchants, {len(config.rule)} rules.\n"
+        f"Re-categorized: {stats.allocations_changed} allocations changed, "
+        f"{stats.internal_pairs} own-account transfer pairs."
+    )
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="skarbonka")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -81,9 +107,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         "inspect", help="print safe statistics about ING exports (never rows)"
     )
     inspect_cmd.add_argument("files", nargs="+", type=Path)
+    seed_cmd = commands.add_parser(
+        "seed", help="load categories, merchants and rules from categories.toml"
+    )
+    seed_cmd.add_argument("--file", type=Path, default=None, help="another TOML file")
     args = parser.parse_args(argv)
     if args.command == "inspect":
         return inspect(args.files)
+    if args.command == "seed":
+        return seed_command(args.file)
     return 2  # pragma: no cover - argparse rejects unknown commands
 
 

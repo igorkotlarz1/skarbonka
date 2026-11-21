@@ -1,4 +1,4 @@
-"""Declarative base for all ORM models (models arrive in M4)."""
+"""Declarative base for all ORM models (see models.py)."""
 
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase

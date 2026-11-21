@@ -5,22 +5,35 @@ from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from skarbonka.api.deps import get_session
 from skarbonka.api.main import create_app
+from skarbonka.config import Settings
 from skarbonka.db.session import make_engine
 from tests.db_utils import recreate_database, run_alembic
 
 DEFAULT_TEST_DATABASE_URL = "postgresql+psycopg://skarbonka:skarbonka@localhost:5432/skarbonka"
 
 
+def _url_from_settings() -> str:
+    """The app's own URL (env or `.env`), so a custom port in `.env` reaches the tests too.
+
+    Tests only use it to reach the server; they work in their own databases.
+    """
+    try:
+        return Settings().database_url
+    except ValidationError:
+        return DEFAULT_TEST_DATABASE_URL
+
+
 @pytest.fixture(scope="session")
 def database_url() -> str:
     """URL of the test database; fails (never skips) when Postgres is down."""
-    url = os.environ.get("SKARBONKA_TEST_DATABASE_URL", DEFAULT_TEST_DATABASE_URL)
+    url = os.environ.get("SKARBONKA_TEST_DATABASE_URL") or _url_from_settings()
     engine = make_engine(url)
     try:
         with engine.connect() as conn:

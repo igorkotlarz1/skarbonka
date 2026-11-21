@@ -77,7 +77,7 @@ Category names stay in Polish (they appear in the UI and reports).
 | Zdrowie | Apteka, Lekarz | none |
 | Inne | none | everything unmatched |
 
-Starting "personal" rules: Żabka, Gym, Booking. The tree awaits the owner's confirmation.
+Starting "personal" rules: Żabka, Gym, Booking. The tree, merchants and rules live in `backend/src/skarbonka/categorization/categories.toml`; the owner edits it and runs `uv run skarbonka seed`. "Przelewy własne" is a system category excluded from settlements.
 
 ## Architecture (summary)
 

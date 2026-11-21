@@ -1,8 +1,14 @@
 """Application settings, read from SKARBONKA_* environment variables or `.env`."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# The repo keeps one `.env` at its root (shared with docker compose), while commands run from
+# `backend/`. Read the root file first; a `.env` in the working directory overrides it.
+# Missing files are ignored, so an installed package simply falls back to the environment.
+REPO_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
@@ -10,7 +16,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="SKARBONKA_",
-        env_file=".env",
+        env_file=(REPO_ENV_FILE, ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from sqlalchemy import text
 
 from skarbonka.api.main import create_app
-from skarbonka.config import Settings
+from skarbonka.config import REPO_ENV_FILE, Settings
 from skarbonka.db.session import make_engine
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -101,3 +101,15 @@ def test_database_ready_with_pgvector(database_url: str) -> None:
     finally:
         engine.dispose()
     assert version
+
+
+def test_settings_read_the_repo_root_env_file(tmp_path: Path) -> None:
+    """Commands run from backend/ still read the `.env` in the repo root (shared with compose)."""
+    repo_root = Path(__file__).resolve().parents[3]
+    assert repo_root / ".env" == REPO_ENV_FILE
+    assert Settings.model_config["env_file"] == (REPO_ENV_FILE, ".env")
+
+    root_env = tmp_path / ".env"
+    root_env.write_text("SKARBONKA_DATABASE_URL=postgresql+psycopg://root:env@h:1/db\n")
+    settings = Settings(_env_file=(root_env, tmp_path / "backend" / ".env"))
+    assert settings.database_url.endswith("root:env@h:1/db")

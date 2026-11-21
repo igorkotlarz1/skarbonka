@@ -237,6 +237,21 @@ Travel spending from Revolut, summarised in PLN and EUR. It never enters the par
 
 ---
 
+## M14. Home server deployment
+
+**Gate**
+- The LLM URL guard accepts loopback, RFC 1918, 100.64.0.0/10 and `*.ts.net` hosts and rejects public hosts and names; the app fails to start with a public URL.
+- The production compose file publishes no Postgres port and binds the API to a configurable interface (parsed from the compose file in the test).
+- Backup script round trip on the test DB: dump, encrypt, decrypt, restore into a scratch DB, row counts equal.
+
+**Hard parts**
+- The LLM URL points straight at the GPU PC (decided); a LiteLLM URL must not be configured, because the guard cannot see where LiteLLM routes.
+- Docker on a host with Tailscale: binding to the tailnet IP before `tailscaled` is up fails at boot; needs a startup order or binding to the LAN IP.
+
+**Owner**: install Ubuntu Server, Docker and Tailscale on the OptiPlex; run the deploy; open the app from the phone; pick and test the backup target.
+
+---
+
 ## Known issues
 
 Appended by `/milestone-skarbonka` when a hard part is likely to bite again. One line each: date, milestone, issue, workaround.

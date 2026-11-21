@@ -81,13 +81,13 @@ Starting "personal" rules: Żabka, Gym, Booking. The tree awaits the owner's con
 
 ## Architecture (summary)
 
-- Everything local on Windows (Docker Desktop + WSL2). Only the finished report leaves the machine, via the Gmail API.
+- Runs on the owner's home server (OptiPlex, Docker Compose), reachable only over Tailscale; development in WSL2. Only the finished report (Gmail API) and NBP rate requests leave the network. See `docs/deployment.md`.
 - Backend: Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 + Alembic, uv, Ruff, mypy, pytest.
 - Database: PostgreSQL 17 + pgvector (source of truth). DuckDB and Polars for notebook analytics.
 - Frontend: React + TypeScript, Vite, TanStack Query and Router, shadcn/ui, Tailwind, ECharts.
 - Reports: Jinja2 + WeasyPrint (PDF), XlsxWriter (Excel).
 - Later: Celery + Redis (stage 2), MLflow (2), Prometheus + Grafana (3), MCP server (4).
-- LLM: Ollama natively on Windows (RTX 2070 8 GB GPU); containers reach it at `host.docker.internal:11434`. Candidates: Qwen3.5-9B (agent), Bielik 11B or 4.5B v3 (Polish text), Gemma 4 E4B (categorization), BGE-M3 or multilingual-e5 (embeddings). Final choice after evaluation on the owner's data.
+- LLM: a local OpenAI-compatible endpoint (`llama-server` or Ollama) on the GPU PC (RTX 2070 8 GB), reached over LAN/Tailscale; the app refuses non-local endpoints. Candidates: Qwen3.5-9B (agent), Bielik 11B or 4.5B v3 (Polish text), Gemma 4 E4B (categorization), BGE-M3 or multilingual-e5 (embeddings). Final choice after evaluation on the owner's data.
 
 ## Data model (summary)
 
@@ -116,7 +116,10 @@ Starting "personal" rules: Żabka, Gym, Booking. The tree awaits the owner's con
 | CSV import only, no aggregators | No consent to share bank data with third parties |
 | Immutable transactions, changes in `allocations` | Receipt splits, full change history, reproducible settlements |
 | Postgres as source of truth, DuckDB for analytics | Postgres for the app, DuckDB convenient in notebooks |
-| Ollama outside Docker | Simplest GPU access on Windows |
+| LLM on the GPU PC behind an OpenAI-compatible API | Runtime can change (llama.cpp, Ollama, LiteLLM) without code changes; the GPU PC may sleep |
+| App on an always-on home server, Tailscale only | 24/7 access without exposing anything to the internet; no Cloudflare Tunnel because it terminates TLS |
+| Skarbonka calls the GPU PC directly, not the LiteLLM gateway | The gateway also routes to cloud models; a fallback would leak transaction text |
+| No cloud fallback when the GPU PC is off | Rows wait in `pending_llm`; financial text never goes to a cloud model |
 | React instead of Streamlit | Nicer UI, future parent accounts, learning frontend |
 | Gmail draft instead of auto-send in the MVP | Control over what reaches the parents |
 | MVP with ING only | mBank returns in stage 2 |

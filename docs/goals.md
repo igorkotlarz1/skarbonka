@@ -17,7 +17,7 @@ I buy groceries for the household and settle up with my parents: I pay everythin
 ## Learning goals
 
 - Containerize the whole system (Docker Compose) on Windows with WSL2.
-- Local LLMs on an RTX 2070 8 GB: Ollama, model selection and evaluation, structured output, tool calling.
+- Local LLMs on an RTX 2070 8 GB: llama.cpp/Ollama behind an OpenAI-compatible API, model selection and evaluation, structured output, tool calling.
 - MCP, a tool-using agent, safe read-only text-to-SQL.
 - Task queues (Celery + Redis), monitoring (Prometheus + Grafana), MLflow.
 - Frontend in React + TypeScript (first time, with Claude Code's help).
@@ -47,7 +47,7 @@ I buy groceries for the household and settle up with my parents: I pay everythin
 | 2 Intelligence | LLM categorization layer, Celery + Redis, retraining from corrections, MLflow and analytics section, watched folder, mBank import |
 | 3 Analytics | Trends, anomalies, per-category forecasts, external features, backtests, Grafana |
 | 4 Assistant | MCP server, text-to-SQL agent, approved actions, email summary, voice |
-| 5 Portfolio and parents | Demo data generator, README, public repo, login with a parent role, Tailscale, backups to a Raspberry Pi, receipt scanning |
+| 5 Portfolio and parents | Demo data generator, README, public repo, login with a parent role, Tailscale, home server deployment (OptiPlex) with encrypted backups, receipt scanning |
 
 ## Non-goals
 

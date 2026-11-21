@@ -6,21 +6,21 @@ Local-first app that imports ING bank CSV exports, categorizes transactions (rul
 
 - NEVER read, grep, list, or print anything under `data/`. It holds real bank exports. If you need real-data facts, ask the user to run a command in their own terminal and paste the aggregated output.
 - Tests and fixtures use only synthetic data from `backend/tests/fixtures/` (generated in the exact ING format). Never copy real values into code, tests, or docs.
-- No cloud LLM APIs or keys in the app. All models run locally via Ollama.
+- No cloud LLM APIs or keys in the app. All models run locally behind an OpenAI-compatible endpoint (llama-server or Ollama); the app rejects non-local LLM URLs. No cloud fallback.
 - Money is `Decimal` in Python and `NUMERIC(12,2)` in Postgres. Never `float` for amounts. Timezone `Europe/Warsaw`.
 - Bank transactions are immutable. Category, personal flag, and splits live in `allocations`.
 - Do not name any directory or module `data` (the privacy hook blocks paths containing `data/`).
 
 ## Stack
 
-Python 3.12, uv, FastAPI, Pydantic v2, SQLAlchemy 2.0 (typed, `Mapped[...]`), Alembic, PostgreSQL 17 + pgvector, pytest, Ruff, mypy (strict). Frontend: React + TypeScript (strict), Vite, TanStack Query/Router, shadcn/ui, Tailwind, ECharts. Reports: Jinja2 + WeasyPrint, XlsxWriter. Docker Compose for db and services; Ollama runs natively on the Windows host (`host.docker.internal:11434`).
+Python 3.12, uv, FastAPI, Pydantic v2, SQLAlchemy 2.0 (typed, `Mapped[...]`), Alembic, PostgreSQL 17 + pgvector, pytest, Ruff, mypy (strict). Frontend: React + TypeScript (strict), Vite, TanStack Query/Router, shadcn/ui, Tailwind, ECharts. Reports: Jinja2 + WeasyPrint, XlsxWriter. Docker Compose for db and services. Production runs on the owner's OptiPlex home server over Tailscale; the LLM runs on the GPU PC. See `docs/deployment.md`.
 
 ## Layout
 
 - `backend/src/skarbonka/` — `api/`, `importers/` (bank parsers, pure functions), `domain/` (models, services), `categorization/`, `settlements/`, `reports/`, `db/` (SQLAlchemy models, Alembic)
 - `backend/tests/` — mirrors `src`; fixtures in `backend/tests/fixtures/`
 - `frontend/` — Vite app
-- `docs/` — goals, context, session plan, progress log
+- `docs/` — goals, context, deployment, session plan, progress log
 
 ## Commands (run from `backend/` unless noted)
 

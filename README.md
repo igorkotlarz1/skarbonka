@@ -21,7 +21,8 @@ I buy groceries for the household and get reimbursed by my parents. Until now th
 
 ## Privacy by design
 
-- Every model (LLM, embeddings, speech) runs locally via [Ollama](https://ollama.com). No cloud AI keys anywhere.
+- Every model (LLM, embeddings, speech) runs locally behind an OpenAI-compatible API (llama.cpp or Ollama). The app refuses non-local model endpoints, and there is no cloud fallback.
+- Self-hosted on a home server, reachable only over Tailscale. Nothing is exposed to the internet.
 - Real bank exports never leave the machine and never enter the repo. Tests and the demo use synthetic data only.
 - The only outbound traffic is the finished report you choose to email.
 
@@ -36,18 +37,18 @@ flowchart LR
     API <--> DB[(PostgreSQL + pgvector)]
     API --> Q[Redis + Celery]
     Q --> DB
-    API <--> LLM[Ollama on local GPU]
+    API <--> LLM[Local LLM on GPU PC]
     MCP[MCP server] <--> API
     API --> Mail[Gmail draft: PDF + Excel]
 ```
 
-**Stack:** Python 3.12 · FastAPI · SQLAlchemy 2 · PostgreSQL + pgvector · React + TypeScript · shadcn/ui · ECharts · Ollama · scikit-learn · MLflow · Docker Compose
+**Stack:** Python 3.12 · FastAPI · SQLAlchemy 2 · PostgreSQL + pgvector · React + TypeScript · shadcn/ui · ECharts · llama.cpp / Ollama · Tailscale · scikit-learn · MLflow · Docker Compose
 
 ## Getting started
 
 > Early development: the backend skeleton runs; features land milestone by milestone.
 
-Requirements: Docker (Engine or Desktop), [uv](https://docs.astral.sh/uv/), Node.js LTS (from the frontend milestone on), and later Ollama with a GPU with 8 GB VRAM for the LLM features.
+Requirements: Docker (Engine or Desktop), [uv](https://docs.astral.sh/uv/), Node.js LTS (from the frontend milestone on), and later a local OpenAI-compatible LLM server (llama.cpp or Ollama) on a GPU with 8 GB VRAM for the LLM features.
 
 ```bash
 git clone https://github.com/igorkotlarz1/skarbonka.git

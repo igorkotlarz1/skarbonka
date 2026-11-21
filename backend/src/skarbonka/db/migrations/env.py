@@ -6,19 +6,21 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 from skarbonka.config import Settings
+from skarbonka.db import models  # noqa: F401  (registers tables on Base.metadata)
 from skarbonka.db.base import Base
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Models register themselves on Base.metadata when imported (from M4 on).
+# Models are imported above so autogenerate sees every table.
 target_metadata = Base.metadata
 
 
 def database_url() -> str:
-    """Explicit `-x url=...` wins (used by tests), then SKARBONKA_DATABASE_URL."""
-    return context.get_x_argument(as_dictionary=True).get("url") or Settings().database_url
+    """A URL passed by tests, then `-x url=...`, then SKARBONKA_DATABASE_URL."""
+    url = config.attributes.get("url") or context.get_x_argument(as_dictionary=True).get("url")
+    return str(url) if url else Settings().database_url
 
 
 def run_migrations_offline() -> None:

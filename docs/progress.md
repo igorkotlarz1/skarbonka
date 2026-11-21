@@ -24,3 +24,9 @@ Entries are appended by `/end-session`, newest at the bottom. `/start-session` r
 - Decisions: row validity is "last filled cell is Konto", not a field count; unknown operation codes pass through as kind `unknown`; hold-only rows use the hold amount.
 - Hard parts: 22 vs 21 fields may be an anonymization artefact; ASCII-only files report utf-8; hold handling unconfirmed.
 - Next: owner runs `inspect` on 2–3 real exports; then M4 (schema and import, Opus).
+
+## 2026-11-21 M4: Schema and import
+- Done: SQLAlchemy models and the first Alembic migration (accounts, import_batches, raw_rows, transactions, allocations, categories, merchants, merchant_aliases, rules, settlements, audit_log; money NUMERIC(12,2) with an explicit currency, original amount and currency kept; pgvector extension enabled), `domain/imports.py` (parse → skip holds → dedup → one allocation per transaction → batch stats), `POST /imports` (several files, per-file stats, a broken file fails alone) and `GET /imports`. Gate M4: 12 tests (58 with M1–M3) + 4 unit tests.
+- Decisions: hold-only rows are not imported, only counted (`holds_skipped`), so a hold that later becomes a booking can never be counted twice. Dedup key is unique in the DB: `nr:<account>:<number>` or `fp:<sha256>` with an occurrence index for rows without a number. Statuses are strings with CHECK constraints, not Postgres enums (cheaper migrations). Tests get their own `skarbonka_test` DB and roll back every test. New dependency: python-multipart (approved).
+- Hard parts: the occurrence index keeps identical unnumbered purchases apart, but only if both exports contain the whole day; a file cut mid-day could still mismatch. Real exports seem to always carry a number, so this is theoretical until `inspect` shows otherwise.
+- Next: owner runs `inspect` on real exports; then M3.5 (Revolut, NBP) or M5 (merchants and rules).

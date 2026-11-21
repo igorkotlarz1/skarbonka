@@ -97,6 +97,7 @@ class IngTransaction(BaseModel):
     foreign_amount: Decimal | None
     foreign_currency: str
     account: str
+    is_hold: bool = False  # only a hold amount, not booked yet
 
 
 class QuarantinedRow(BaseModel):
@@ -247,6 +248,7 @@ def parse_row(cells: Sequence[str], index: dict[str, int], line_number: int) -> 
         foreign_amount=parse_optional_amount(cell(COL_FOREIGN)),
         foreign_currency=cell(f"{COL_CURRENCY}:{COL_FOREIGN}"),
         account=cell(COL_ACCOUNT),
+        is_hold=not amount_cell,
     )
 
 

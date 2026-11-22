@@ -8,9 +8,9 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from skarbonka.api.imports import SessionDep
+from skarbonka.api.imports import ModelDep, SessionDep, ThresholdDep
 from skarbonka.categorization.rules import RuleSpec
-from skarbonka.db.models import AuditLog, Merchant, Rule, Transaction
+from skarbonka.db.models import Allocation, AuditLog, Merchant, Rule, Transaction
 from skarbonka.domain.categories import UnknownCategoryError, category_by_path, category_path
 from skarbonka.domain.categorize import (
     CategorizeStats,
@@ -63,7 +63,9 @@ def list_rules(session: SessionDep) -> list[RuleSpec]:
 
 
 @router.post("/rules", status_code=status.HTTP_201_CREATED)
-def create_rule(spec: RuleSpec, session: SessionDep) -> RuleOut:
+def create_rule(
+    spec: RuleSpec, session: SessionDep, model: ModelDep, threshold: ThresholdDep
+) -> RuleOut:
     try:
         category_id = category_by_path(session, spec.category).id if spec.category else None
     except UnknownCategoryError as exc:
@@ -82,7 +84,7 @@ def create_rule(spec: RuleSpec, session: SessionDep) -> RuleOut:
     except IntegrityError as exc:
         session.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, f"rule {spec.name!r} exists") from exc
-    categorize(session)
+    categorize(session, model=model, threshold=threshold)
     session.commit()
     return RuleOut(id=rule.id, rule=spec)
 
@@ -118,15 +120,21 @@ def preview_rule(spec: RuleSpec, session: SessionDep) -> PreviewOut:
 
 
 @router.post("/categorize")
-def recategorize(session: SessionDep) -> CategorizeStats:
-    """Re-apply merchants, rules and transfer detection to every non-manual allocation."""
-    stats = categorize(session)
+def recategorize(session: SessionDep, model: ModelDep, threshold: ThresholdDep) -> CategorizeStats:
+    """Re-apply merchants, rules, the classifier and transfer detection (manual stays)."""
+    stats = categorize(session, model=model, threshold=threshold)
     session.commit()
     return stats
 
 
 @router.put("/transactions/{transaction_id}/category")
-def set_category(transaction_id: int, body: ManualCategory, session: SessionDep) -> dict[str, str]:
+def set_category(
+    transaction_id: int,
+    body: ManualCategory,
+    session: SessionDep,
+    model: ModelDep,
+    threshold: ThresholdDep,
+) -> dict[str, str]:
     t = session.get(Transaction, transaction_id)
     if t is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "no such transaction")
@@ -144,6 +152,7 @@ def set_category(transaction_id: int, body: ManualCategory, session: SessionDep)
     if body.personal is not None:
         allocation.personal = body.personal
     allocation.source = "manual"
+    allocation.suggested_category_id = None
     session.add(AuditLog(
         entity="allocation", entity_id=allocation.id, action="manual_category", before=before,
         after={"category_id": allocation.category_id, "personal": allocation.personal,
@@ -152,8 +161,40 @@ def set_category(transaction_id: int, body: ManualCategory, session: SessionDep)
     if body.remember_for_merchant and category is not None and t.merchant_id is not None:
         merchant = session.get_one(Merchant, t.merchant_id)
         merchant.default_category_id = category.id
-        categorize(session, session.scalars(
+        same_merchant = session.scalars(
             select(Transaction).where(Transaction.merchant_id == merchant.id)
-        ))  # fmt: skip
+        )
+        categorize(session, same_merchant, model=model, threshold=threshold)
     session.commit()
     return {"status": "ok"}
+
+
+class ReviewRow(BaseModel):
+    transaction_id: int
+    transaction_date: date
+    counterparty: str
+    title: str
+    amount: Decimal
+    suggested_category: str | None
+    confidence: Decimal | None
+
+
+@router.get("/review-queue")
+def review_queue(session: SessionDep, limit: int = 100) -> list[ReviewRow]:
+    """Transactions still without a category, newest first, with the model's guess if any."""
+    rows = session.execute(
+        select(Transaction, Allocation)
+        .join(Allocation, Allocation.transaction_id == Transaction.id)
+        .where(Allocation.category_id.is_(None))
+        .order_by(Transaction.transaction_date.desc(), Transaction.id.desc())
+        .limit(limit)
+    ).all()
+    return [
+        ReviewRow(
+            transaction_id=t.id, transaction_date=t.transaction_date,
+            counterparty=t.counterparty, title=t.title, amount=t.amount,
+            suggested_category=category_path(session, a.suggested_category_id),
+            confidence=a.confidence,
+        )
+        for t, a in rows
+    ]  # fmt: skip

@@ -10,8 +10,17 @@ dependencies = [
     "psycopg[binary]>=3.3.9",
     "pydantic-settings>=2.16.3",
     "python-multipart>=0.0.34",
+    "scikit-learn>=1.9.1",
     "sqlalchemy>=2.0",
     "uvicorn[standard]>=0.54.0",
+]
+
+[project.optional-dependencies]
+# Sentence embeddings for the classifier (M6). Heavy (torch), so not installed by default:
+# `uv sync --extra embeddings`. Torch comes from the CPU-only index below.
+embeddings = [
+    "sentence-transformers>=5.0",
+    "torch>=2.9",
 ]
 
 [project.scripts]
@@ -60,3 +69,15 @@ dev = [
     "pytest>=9.2.0",
     "ruff>=0.17.6",
 ]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "joblib", "sentence_transformers"]
+ignore_missing_imports = true

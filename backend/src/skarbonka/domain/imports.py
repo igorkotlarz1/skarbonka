@@ -21,8 +21,9 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from skarbonka.categorization.classifier import CategoryPredictor
 from skarbonka.db.models import Account, Allocation, ImportBatch, RawRow, Transaction
-from skarbonka.domain.categorize import categorize
+from skarbonka.domain.categorize import DEFAULT_THRESHOLD, categorize
 from skarbonka.importers.ing import IngTransaction, parse_ing
 
 BANK_ING = "ING"
@@ -96,7 +97,13 @@ def raw_row(
     )
 
 
-def import_ing_file(session: Session, filename: str, raw: bytes) -> ImportStats:
+def import_ing_file(
+    session: Session,
+    filename: str,
+    raw: bytes,
+    model: CategoryPredictor | None = None,
+    threshold: float = DEFAULT_THRESHOLD,
+) -> ImportStats:
     """Import one ING export. A file that cannot be parsed is recorded as a failed batch."""
     batch = ImportBatch(
         bank=BANK_ING, filename=filename, sha256=hashlib.sha256(raw).hexdigest(), status="ok",
@@ -164,7 +171,7 @@ def import_ing_file(session: Session, filename: str, raw: bytes) -> ImportStats:
 
     session.flush()
     if new_transactions:
-        categorize(session, new_transactions)
+        categorize(session, new_transactions, model=model, threshold=threshold)
     return to_stats(batch)
 
 

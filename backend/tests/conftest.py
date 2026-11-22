@@ -10,7 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from skarbonka.api.deps import get_session
+from skarbonka.api.deps import get_category_model, get_ml_threshold, get_session
 from skarbonka.api.main import create_app
 from skarbonka.config import Settings
 from skarbonka.db.session import make_engine
@@ -90,5 +90,7 @@ def client(db: Session) -> Iterator[TestClient]:
     """API client whose requests share the rolled-back test session."""
     app = create_app()
     app.dependency_overrides[get_session] = lambda: db
+    app.dependency_overrides[get_category_model] = lambda: None  # never a local models/ file
+    app.dependency_overrides[get_ml_threshold] = lambda: 0.8
     with TestClient(app) as test_client:
         yield test_client

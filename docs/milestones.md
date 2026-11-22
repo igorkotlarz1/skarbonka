@@ -269,3 +269,6 @@ Appended by `/milestone-skarbonka` when a hard part is likely to bite again. One
 - 2026-11-21 M4: tests create and drop the databases `skarbonka_test` and `skarbonka_migrations` on the server from `SKARBONKA_TEST_DATABASE_URL`, so that user needs CREATEDB (the compose user is a superuser). Never point the test URL at a server holding real data you care about under those names.
 - 2026-11-21 M4: an existing local database needs `uv run alembic upgrade head` once after pulling M4.
 - 2026-11-21 M5: after pulling M5 run `uv run alembic upgrade head` and `uv run skarbonka seed`. Editing `backend/src/skarbonka/categorization/categories.toml` needs another `seed`; renaming a category in TOML creates a new one (the old stays, rules move to the new name).
+- 2026-11-22 M6: torch for the `embeddings` extra comes from `download.pytorch.org` (CPU index, set in `pyproject.toml`); a network policy must allow it and `download-r2.pytorch.org`. Hugging Face downloads over Xet (`cas-server.xethub.hf.co`) may be blocked by a proxy: `HF_HUB_DISABLE_XET=1` falls back to the plain CDN. Once cached, `HF_HUB_OFFLINE=1` keeps the model fully local.
+- 2026-11-22 M6: a model in `models/` is unpickled with joblib. Only load models you trained yourself with `skarbonka train`.
+

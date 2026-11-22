@@ -13,8 +13,13 @@ from collections import Counter
 from collections.abc import Sequence
 from decimal import Decimal
 from pathlib import Path
+from typing import Any, get_args
 
+from skarbonka.categorization.features import Backend
+from skarbonka.categorization.synthetic_labels import LabelledExample, synthetic_examples
 from skarbonka.importers.ing import EncodingNotSupportedError, ParseResult, parse_ing
+
+BACKENDS: tuple[str, ...] = get_args(Backend)
 
 
 def format_inspect(name: str, result: ParseResult) -> str:
@@ -100,6 +105,77 @@ def seed_command(file: Path | None) -> int:
     return 0
 
 
+def _examples(synthetic: bool) -> list[LabelledExample]:
+    if synthetic:
+        return synthetic_examples(seed=0)
+    from skarbonka.api.deps import session_factory
+    from skarbonka.domain.training import labelled_examples
+
+    with session_factory()() as session:
+        examples, sources = labelled_examples(session)
+    print("Labels: " + ", ".join(f"{k} {n}" for k, n in sources.most_common()) or "none")
+    return examples
+
+
+def format_report(report: dict[str, Any]) -> str:
+    """Metrics only: counts and scores per category name, never a transaction."""
+    test = report["test"]
+    split = report["split"]
+    at = test["accuracy_at_threshold"]
+    lines = [
+        f"Backend: {report['backend']}  calibrated: {report['calibrated']}",
+        f"Split by merchant: train {split['train']} ({split['train_merchants']} merchants), "
+        f"test {split['test']} ({split['test_merchants']} new merchants), "
+        f"shared {split['shared_merchants']}",
+        f"Macro-F1: {test['macro_f1']:.3f}  accuracy: {test['accuracy']:.3f}",
+        f"At threshold {test['threshold']}: coverage {test['coverage_at_threshold']:.1%}, "
+        f"accuracy {'n/a' if at is None else format(at, '.1%')}  "
+        f"(calibration error {test['expected_calibration_error']:.3f})",
+        f"  {'category':<28} {'f1':>6} {'prec':>6} {'rec':>6} {'n':>5}",
+    ]
+    lines += [
+        f"  {label:<28} {m['f1']:>6.3f} {m['precision']:>6.3f} {m['recall']:>6.3f} "
+        f"{m['support']:>5}"
+        for label, m in sorted(test["per_class"].items(), key=lambda kv: -kv[1]["support"])
+    ]
+    return "\n".join(lines)
+
+
+def train_command(
+    backend: Backend, synthetic: bool, models_dir: Path | None, threshold: float
+) -> int:
+    from skarbonka.categorization.evaluate import train_and_evaluate
+    from skarbonka.config import get_settings
+
+    examples = _examples(synthetic)
+    if len({e.label for e in examples}) < 2:
+        print("ERROR: need labelled transactions from at least two categories")
+        return 1
+    target = models_dir or get_settings().models_dir
+    try:
+        report = train_and_evaluate(examples, target, backend=backend, threshold=threshold)
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+    print(format_report(report))
+    print(f"Model and metrics.json written to {target}")
+    return 0
+
+
+def evaluate_command(backends: Sequence[Backend], synthetic: bool, threshold: float) -> int:
+    from skarbonka.categorization.evaluate import evaluate_backend
+
+    examples = _examples(synthetic)
+    try:
+        for backend in backends:
+            print(format_report(evaluate_backend(examples, backend, threshold, seed=0)))
+            print()
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="skarbonka")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -111,7 +187,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         "seed", help="load categories, merchants and rules from categories.toml"
     )
     seed_cmd.add_argument("--file", type=Path, default=None, help="another TOML file")
+    for name, help_text in (
+        ("train", "train the category classifier and save it to models/ (prints metrics)"),
+        ("evaluate", "compare classifier backends on a merchant-grouped split (no saving)"),
+    ):
+        cmd = commands.add_parser(name, help=help_text)
+        cmd.add_argument("--synthetic", action="store_true", help="use invented examples")
+        cmd.add_argument("--threshold", type=float, default=0.8)
+        if name == "train":
+            cmd.add_argument("--backend", choices=BACKENDS, default="tfidf")
+            cmd.add_argument("--models-dir", type=Path, default=None)
+        else:
+            cmd.add_argument("--backends", nargs="+", choices=BACKENDS, default=["tfidf"])
     args = parser.parse_args(argv)
+    if args.command == "train":
+        return train_command(args.backend, args.synthetic, args.models_dir, args.threshold)
+    if args.command == "evaluate":
+        return evaluate_command(args.backends, args.synthetic, args.threshold)
     if args.command == "inspect":
         return inspect(args.files)
     if args.command == "seed":

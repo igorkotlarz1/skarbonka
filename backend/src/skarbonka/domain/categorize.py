@@ -1,17 +1,20 @@
 """Apply merchants, rules and own-account transfer detection to allocations.
 
-Layers, strongest first: manual change → owner's rules → merchant memory → (ML, LLM later).
+Layers, strongest first: manual change → owner's rules → merchant memory → ML classifier
+→ review queue (no category, the model's guess kept as a suggestion). LLM comes in M8.
 Allocations the owner changed by hand (`source = "manual"`) and split transactions are never
 touched here.
 """
 
 from collections.abc import Iterable
 from datetime import timedelta
+from decimal import Decimal
 
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from skarbonka.categorization.classifier import CategoryPredictor, Prediction
 from skarbonka.categorization.merchants import (
     best_keyword_match,
     display_name,
@@ -31,12 +34,15 @@ from skarbonka.domain.categories import category_path, find_category
 
 INTERNAL_CATEGORY = "Przelewy własne"
 INTERNAL_WINDOW = timedelta(days=2)
+DEFAULT_THRESHOLD = 0.8
 
 
 class CategorizeStats(BaseModel):
     merchants_linked: int = 0
     allocations_changed: int = 0
     internal_pairs: int = 0
+    ml_applied: int = 0
+    needs_review: int = 0
 
 
 def resolve_merchant(session: Session, counterparty: str) -> Merchant | None:
@@ -110,9 +116,15 @@ def editable(t: Transaction) -> Allocation | None:
 
 
 def categorize(
-    session: Session, transactions: Iterable[Transaction] | None = None
+    session: Session,
+    transactions: Iterable[Transaction] | None = None,
+    model: CategoryPredictor | None = None,
+    threshold: float = DEFAULT_THRESHOLD,
 ) -> CategorizeStats:
-    """Link merchants and (re)apply rules and merchant memory. Flushes, never commits."""
+    """Link merchants and (re)apply rules, merchant memory and the classifier.
+
+    Flushes, never commits. Without a model, rows nothing else labels stay uncategorized.
+    """
     stats = CategorizeStats()
     rows = (
         list(transactions)
@@ -120,6 +132,7 @@ def categorize(
         else list(session.scalars(select(Transaction)))
     )
     rules = active_rules(session)
+    pending: list[tuple[Transaction, Allocation, Merchant | None, bool, str]] = []
     for t in rows:
         if t.merchant_id is None:
             merchant = resolve_merchant(session, t.counterparty)
@@ -131,16 +144,52 @@ def categorize(
             continue
         merchant = session.get(Merchant, t.merchant_id) if t.merchant_id else None
         category_id, personal, source = proposed(session, rules, t, merchant)
-        if (allocation.category_id, allocation.personal, allocation.source) != (
-            category_id, personal, source,
-        ):  # fmt: skip
-            allocation.category_id, allocation.personal, allocation.source = (
-                category_id, personal, source,
-            )  # fmt: skip
-            stats.allocations_changed += 1
+        if category_id is None:
+            pending.append((t, allocation, merchant, personal, source))
+            continue
+        stats.allocations_changed += _apply(allocation, category_id, personal, source)
+
+    guesses: list[Prediction | None] = [None] * len(pending)
+    if model is not None and pending:
+        guesses = list(model.predict([view(t, m) for t, _, m, _, _ in pending]))
+    for (_, allocation, _, personal, source), guess in zip(pending, guesses, strict=True):
+        found = find_category(session, guess.category) if guess else None
+        if guess is None or found is None:
+            stats.allocations_changed += _apply(allocation, None, personal, source)
+            continue
+        confidence = Decimal(f"{guess.probability:.3f}")
+        if guess.probability >= threshold:
+            stats.ml_applied += 1
+            stats.allocations_changed += _apply(
+                allocation, found.id, personal, "ml" if source == "import" else source, confidence
+            )
+        else:
+            stats.needs_review += 1
+            stats.allocations_changed += _apply(
+                allocation, None, personal, source, confidence, suggested=found.id
+            )
     stats.internal_pairs = mark_internal_transfers(session)
     session.flush()
     return stats
+
+
+def _apply(
+    allocation: Allocation,
+    category_id: int | None,
+    personal: bool,
+    source: str,
+    confidence: Decimal | None = None,
+    suggested: int | None = None,
+) -> int:
+    """Write the automatic decision; 1 if anything changed."""
+    new = (category_id, personal, source, confidence, suggested)
+    old = (allocation.category_id, allocation.personal, allocation.source,
+           allocation.confidence, allocation.suggested_category_id)  # fmt: skip
+    if old == new:
+        return 0
+    (allocation.category_id, allocation.personal, allocation.source,
+     allocation.confidence, allocation.suggested_category_id) = new  # fmt: skip
+    return 1
 
 
 def mark_internal_transfers(session: Session) -> int:
@@ -171,9 +220,7 @@ def mark_internal_transfers(session: Session) -> int:
         for leg in (out, match):
             allocation = editable(leg)
             if allocation is not None:
-                allocation.category_id, allocation.personal, allocation.source = (
-                    internal.id, False, "rule",
-                )  # fmt: skip
+                _apply(allocation, internal.id, False, "rule")
     return pairs
 
 

@@ -98,7 +98,7 @@ Starting "personal" rules: Żabka, Gym, Booking. The tree, merchants and rules l
 1. Manual change of a single transaction.
 2. Owner's rules.
 3. Merchant memory (consistent category in history).
-4. ML classifier (description embedding + amount, weekday, type, account), calibrated probabilities.
+4. ML classifier (text as TF-IDF char n-grams or multilingual-e5 embeddings + amount, weekday, type, account), temperature-calibrated probabilities. Category only, never the personal flag. Below the threshold the guess waits in the review queue as a suggestion.
 5. Local LLM for low confidence (stage 2).
 6. Below the confidence threshold: the review queue.
 

@@ -164,6 +164,7 @@ Travel spending from Revolut, summarised in PLN and EUR. It never enters the par
 - A split replaces the single allocation; the original transaction row is unchanged.
 - Every change writes audit_log in the same database transaction (simulate a failure → nothing is written).
 - After a manual correction, the API returns a rule suggestion.
+- A transaction with an unknown merchant gets an ML or local LLM proposal in `allocations.suggested_category_id`; the owner accepts it with one click (becomes `manual`, optionally remembered for the merchant) or picks another category. Nothing is applied without the click.
 
 **Hard parts**
 - A split of an already settled transaction must be refused or create a correction. Decide which before coding.
@@ -267,3 +268,4 @@ Appended by `/milestone-skarbonka` when a hard part is likely to bite again. One
 - 2026-11-21 M4: hold-only rows are skipped at import (counted as `holds_skipped`), unlike `inspect`, which still counts them as "Holds" with their hold amount. A bank summary that includes holds will then show a debit mismatch warning; that is expected, not a bug.
 - 2026-11-21 M4: tests create and drop the databases `skarbonka_test` and `skarbonka_migrations` on the server from `SKARBONKA_TEST_DATABASE_URL`, so that user needs CREATEDB (the compose user is a superuser). Never point the test URL at a server holding real data you care about under those names.
 - 2026-11-21 M4: an existing local database needs `uv run alembic upgrade head` once after pulling M4.
+- 2026-11-21 M5: after pulling M5 run `uv run alembic upgrade head` and `uv run skarbonka seed`. Editing `backend/src/skarbonka/categorization/categories.toml` needs another `seed`; renaming a category in TOML creates a new one (the old stays, rules move to the new name).

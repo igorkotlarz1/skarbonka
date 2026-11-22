@@ -1,0 +1,165 @@
+# Skarbonka: categories, merchants and starting rules.
+#
+# Edit freely, then run `uv run skarbonka seed` (from backend/). Seeding only adds and
+# updates: it never deletes a category, merchant or rule, and never touches allocations
+# you changed by hand. Names are Polish because they appear in the UI and the reports.
+#
+# Category paths are "Parent/Child". A category with `excluded_from_settlement = true`
+# never reaches a settlement (M9).
+
+[[category]]
+name = "Jedzenie"
+children = ["Zakupy spożywcze", "Przekąski", "Jedzenie na uczelni", "Restauracje"]
+
+[[category]]
+name = "Dom"
+children = ["Meble i wyposażenie", "Chemia i higiena"]
+
+[[category]]
+name = "Transport"
+children = ["Paliwo", "Komunikacja"]
+
+[[category]]
+name = "Sport"
+children = ["Siłownia", "Aktywności"]
+
+[[category]]
+name = "Podróże"
+children = ["Transport", "Noclegi"]
+
+[[category]]
+name = "Zdrowie"
+children = ["Apteka", "Lekarz"]
+
+[[category]]
+name = "Inne"
+children = []
+
+[[category]]
+name = "Przelewy własne"
+children = []
+excluded_from_settlement = true
+
+# Merchants: `keywords` are matched as whole words (case-insensitive) in the counterparty
+# field, so "BP" matches "BP-PIAST" but not "BPH". `category` is the merchant's default
+# (merchant memory); rules below win over it.
+
+[[merchant]]
+name = "Lidl"
+keywords = ["LIDL"]
+category = "Jedzenie/Zakupy spożywcze"
+
+[[merchant]]
+name = "Biedronka"
+keywords = ["BIEDRONKA"]
+category = "Jedzenie/Zakupy spożywcze"
+
+[[merchant]]
+name = "Auchan"
+keywords = ["AUCHAN"]
+category = "Jedzenie/Zakupy spożywcze"
+
+[[merchant]]
+name = "Carrefour"
+keywords = ["CARREFOUR"]
+category = "Jedzenie/Zakupy spożywcze"
+
+[[merchant]]
+name = "POLOmarket"
+keywords = ["POLOMARKET"]
+category = "Jedzenie/Zakupy spożywcze"
+
+[[merchant]]
+name = "Żabka"
+keywords = ["ŻABKA", "ZABKA"]
+category = "Jedzenie/Przekąski"
+
+[[merchant]]
+name = "Stołówka Studencka"
+keywords = ["STOŁÓWKA STUDENCKA"]
+category = "Jedzenie/Jedzenie na uczelni"
+
+[[merchant]]
+name = "Tomasz Kula"
+keywords = ["TOMASZ KULA"]
+category = "Jedzenie/Jedzenie na uczelni"
+
+[[merchant]]
+name = "IKEA"
+keywords = ["IKEA"]
+category = "Dom/Meble i wyposażenie"
+
+[[merchant]]
+name = "Agata"
+keywords = ["AGATA"]
+category = "Dom/Meble i wyposażenie"
+
+[[merchant]]
+name = "Rossmann"
+keywords = ["ROSSMANN"]
+category = "Dom/Chemia i higiena"
+
+[[merchant]]
+name = "Orlen"
+keywords = ["ORLEN"]
+category = "Transport/Paliwo"
+
+[[merchant]]
+name = "BP"
+keywords = ["BP"]
+category = "Transport/Paliwo"
+
+[[merchant]]
+name = "Shell"
+keywords = ["SHELL"]
+category = "Transport/Paliwo"
+
+[[merchant]]
+name = "Wizz Air"
+keywords = ["WIZZ"]
+category = "Podróże/Transport"
+
+[[merchant]]
+name = "Ryanair"
+keywords = ["RYANAIR"]
+category = "Podróże/Transport"
+
+[[merchant]]
+name = "Booking.com"
+keywords = ["BOOKING.COM", "BOOKING"]
+category = "Podróże/Noclegi"
+
+[[merchant]]
+name = "Apteka"
+keywords = ["APTEKA"]
+category = "Zdrowie/Apteka"
+
+# Rules: lower `priority` runs first; for each outcome (category, personal) the first
+# matching rule wins. Conditions (all must hold): merchant, phrase (whole word in
+# counterparty or title), regex, amount_min / amount_max (absolute value, PLN),
+# account, weekdays (0 = Monday), operation_kind (card, blik, transfer, unknown).
+
+[[rule]]
+name = "Żabka jest osobista"
+priority = 10
+when = { merchant = "Żabka" }
+personal = true
+
+[[rule]]
+name = "Booking jest osobisty"
+priority = 10
+when = { merchant = "Booking.com" }
+personal = true
+
+[[rule]]
+name = "Siłownia"
+priority = 20
+when = { phrase = "GYM" }
+category = "Sport/Siłownia"
+personal = true
+
+[[rule]]
+name = "Aktywności sportowe"
+priority = 30
+when = { regex = "\\b(SKARPA|LIMBO|PREZERO)\\b" }
+category = "Sport/Aktywności"

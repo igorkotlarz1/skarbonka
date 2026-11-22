@@ -22,6 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from skarbonka.db.models import Account, Allocation, ImportBatch, RawRow, Transaction
+from skarbonka.domain.categorize import categorize
 from skarbonka.importers.ing import IngTransaction, parse_ing
 
 BANK_ING = "ING"
@@ -129,6 +130,7 @@ def import_ing_file(session: Session, filename: str, raw: bytes) -> ImportStats:
     existing = set(
         session.scalars(select(Transaction.dedup_key).where(Transaction.dedup_key.in_(keys)))
     )
+    new_transactions: list[Transaction] = []
     for (account_id, t), key in zip(booked, keys, strict=True):
         payload = t.model_dump(mode="json")
         if key in existing:
@@ -156,10 +158,13 @@ def import_ing_file(session: Session, filename: str, raw: bytes) -> ImportStats:
         )
         session.add(transaction)
         session.flush()
+        new_transactions.append(transaction)
         session.add(raw_row(batch, t.line_number, "inserted", payload, transaction.id))
         batch.inserted += 1
 
     session.flush()
+    if new_transactions:
+        categorize(session, new_transactions)
     return to_stats(batch)
 
 

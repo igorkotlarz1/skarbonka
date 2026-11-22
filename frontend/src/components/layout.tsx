@@ -18,6 +18,13 @@ export function Layout() {
             >
               Transakcje
             </Link>
+            <Link
+              to="/przeglad"
+              className="text-muted-foreground hover:text-foreground"
+              activeProps={{ className: 'text-foreground font-medium' }}
+            >
+              Przegląd
+            </Link>
           </nav>
           <div className="ml-auto">
             <ThemeToggle />

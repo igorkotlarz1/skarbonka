@@ -3,6 +3,7 @@
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
 
 import { Layout } from '@/components/layout'
+import { ReviewPage } from '@/pages/review'
 import { parseTransactionSearch } from '@/pages/transaction-search'
 import { TransactionsPage } from '@/pages/transactions'
 
@@ -23,8 +24,14 @@ export const transactionsRoute = createRoute({
   component: TransactionsPage,
 })
 
+const reviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/przeglad',
+  component: ReviewPage,
+})
+
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([indexRoute, transactionsRoute]),
+  routeTree: rootRoute.addChildren([indexRoute, transactionsRoute, reviewRoute]),
 })
 
 declare module '@tanstack/react-router' {

@@ -194,6 +194,47 @@ export interface paths {
         patch: operations["patch_allocation_allocations__allocation_id__patch"];
         trace?: never;
     };
+    "/allocations/{allocation_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Suggestion
+         * @description The owner's one click on a proposal: it becomes a manual category, optionally the
+         *     merchant's default (which then recategorizes the merchant's other automatic rows).
+         */
+        post: operations["accept_suggestion_allocations__allocation_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transactions/{transaction_id}/splits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Splits
+         * @description Split a transaction into parts that sum to it exactly; one part merges it back.
+         */
+        put: operations["put_splits_transactions__transaction_id__splits_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/allocations/bulk": {
         parameters: {
             query?: never;
@@ -218,6 +259,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptBody */
+        AcceptBody: {
+            /**
+             * Remember For Merchant
+             * @default false
+             */
+            remember_for_merchant: boolean;
+        };
         /** AllocationOut */
         AllocationOut: {
             /** Id */
@@ -371,6 +420,27 @@ export interface components {
              */
             remember_for_merchant: boolean;
         };
+        /**
+         * PatchResult
+         * @description The changed allocation, plus a rule proposal when a category was set by hand.
+         */
+        PatchResult: {
+            /** Id */
+            id: number;
+            /** Amount */
+            amount: string;
+            /** Category */
+            category: string | null;
+            /** Personal */
+            personal: boolean;
+            /** Source */
+            source: string;
+            /** Confidence */
+            confidence: string | null;
+            /** Suggested Category */
+            suggested_category: string | null;
+            rule_suggestion?: components["schemas"]["RuleSuggestion"] | null;
+        };
         /** PreviewOut */
         PreviewOut: {
             /** Matched */
@@ -507,6 +577,32 @@ export interface components {
             category?: string | null;
             /** Personal */
             personal?: boolean | null;
+        };
+        /**
+         * RuleSuggestion
+         * @description A ready `POST /rules` body plus how many other transactions it would recategorize now.
+         */
+        RuleSuggestion: {
+            rule: components["schemas"]["RuleSpec-Output"];
+            /** Would Change */
+            would_change: number;
+        };
+        /** SplitIn */
+        SplitIn: {
+            /** Parts */
+            parts: components["schemas"]["SplitPartIn"][];
+        };
+        /** SplitPartIn */
+        SplitPartIn: {
+            /** Amount */
+            amount: number | string;
+            /** Category */
+            category?: string | null;
+            /**
+             * Personal
+             * @default false
+             */
+            personal: boolean;
         };
         /** TransactionOut */
         TransactionOut: {
@@ -907,7 +1003,77 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["PatchResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_suggestion_allocations__allocation_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                allocation_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["AllocationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_splits_transactions__transaction_id__splits_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SplitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
                 };
             };
             /** @description Validation Error */

@@ -49,3 +49,9 @@ Entries are appended by `/end-session`, newest at the bottom. `/start-session` r
 - Hard parts: shadcn's CLI fetches from `ui.shadcn.com` (added to the network allowlist). No frontend unit tests yet (vitest would be a new dependency).
 - Next: owner labels a gold set in the list; M8 (review queue screen and splits).
 
+## 2026-11-22 M8: Review queue and splits
+- Done: `domain/splits.py` (pure `check_split`: whole grosze, no zero parts, one sign, exact sum; `split_transaction` replaces allocations with `manual` parts and audits before/after), `domain/suggestions.py` ("merchant → category" rule proposal with its current reach), API `PUT /transactions/{id}/splits`, `POST /allocations/{id}/accept` (optionally remembers the merchant), `rule_suggestion` in the `PATCH /allocations/{id}` response, an `atomic()` block that commits change and audit together or rolls both back. Frontend: `/przeglad` review screen driven by the keyboard (Enter accept, `/` category search, O personal, P split, Z remember, R make rule, ←/→), split dialog with a live "left to allocate" counter, split button in the list. Gate M8: 9 tests (93 with M1–M7) + 10 unit tests.
+- Decisions: a transaction already in a settlement cannot be split (409); corrections belong to M9. A one-part split merges a split back. Rule proposals only for single-allocation transactions with a known merchant. The review screen edits the first uncategorized part of a split.
+- Hard parts: the test session joins an outer transaction, so a request's rollback also undid uncommitted fixture data; the M8 fixture now commits after loading, like a real import. Keyboard shortcuts stay off in inputs, dialogs and on focused buttons (Enter there already clicks).
+- Next: M9 (settlements); owner reviews the real queue and labels the gold set.
+

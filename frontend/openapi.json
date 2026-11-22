@@ -1,0 +1,1627 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Skarbonka",
+  "version": "0.1.0"
+ },
+ "paths": {
+  "/health": {
+   "get": {
+    "summary": "Health",
+    "operationId": "health_health_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "type": "object",
+         "title": "Response Health Health Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/imports": {
+   "post": {
+    "tags": [
+     "imports"
+    ],
+    "summary": "Create Imports",
+    "description": "Import every file; one broken file is reported in its stats and does not stop the rest.",
+    "operationId": "create_imports_imports_post",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_create_imports_imports_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ImportResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "tags": [
+     "imports"
+    ],
+    "summary": "List Imports",
+    "description": "Newest first.",
+    "operationId": "list_imports_imports_get",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 50,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ImportStats"
+         },
+         "title": "Response List Imports Imports Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/rules": {
+   "get": {
+    "tags": [
+     "categorization"
+    ],
+    "summary": "List Rules",
+    "operationId": "list_rules_rules_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/RuleSpec-Output"
+         },
+         "type": "array",
+         "title": "Response List Rules Rules Get"
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "categorization"
+    ],
+    "summary": "Create Rule",
+    "operationId": "create_rule_rules_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RuleSpec-Input"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RuleOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/rules/preview": {
+   "post": {
+    "tags": [
+     "categorization"
+    ],
+    "summary": "Preview Rule",
+    "description": "What would this rule change if it were added with its priority? Writes nothing.",
+    "operationId": "preview_rule_rules_preview_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RuleSpec-Input"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PreviewOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/categorize": {
+   "post": {
+    "tags": [
+     "categorization"
+    ],
+    "summary": "Recategorize",
+    "description": "Re-apply merchants, rules, the classifier and transfer detection (manual stays).",
+    "operationId": "recategorize_categorize_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CategorizeStats"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/transactions/{transaction_id}/category": {
+   "put": {
+    "tags": [
+     "categorization"
+    ],
+    "summary": "Set Category",
+    "operationId": "set_category_transactions__transaction_id__category_put",
+    "parameters": [
+     {
+      "name": "transaction_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Transaction Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ManualCategory"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": {
+          "type": "string"
+         },
+         "title": "Response Set Category Transactions  Transaction Id  Category Put"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/review-queue": {
+   "get": {
+    "tags": [
+     "categorization"
+    ],
+    "summary": "Review Queue",
+    "description": "Transactions still without a category, newest first, with the model's guess if any.",
+    "operationId": "review_queue_review_queue_get",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 100,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ReviewRow"
+         },
+         "title": "Response Review Queue Review Queue Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/categories": {
+   "get": {
+    "tags": [
+     "transactions"
+    ],
+    "summary": "List Categories",
+    "operationId": "list_categories_categories_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/CategoryOut"
+         },
+         "type": "array",
+         "title": "Response List Categories Categories Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/transactions": {
+   "get": {
+    "tags": [
+     "transactions"
+    ],
+    "summary": "List Transactions",
+    "description": "Newest first. A parent category also matches its children.",
+    "operationId": "list_transactions_transactions_get",
+    "parameters": [
+     {
+      "name": "date_from",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Date From"
+      }
+     },
+     {
+      "name": "date_to",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Date To"
+      }
+     },
+     {
+      "name": "category",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Category"
+      }
+     },
+     {
+      "name": "merchant",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Merchant"
+      }
+     },
+     {
+      "name": "personal",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Personal"
+      }
+     },
+     {
+      "name": "needs_review",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Needs Review"
+      }
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 200
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Q"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 500,
+       "minimum": 1,
+       "default": 50,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TransactionPage"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/allocations/{allocation_id}": {
+   "patch": {
+    "tags": [
+     "transactions"
+    ],
+    "summary": "Patch Allocation",
+    "operationId": "patch_allocation_allocations__allocation_id__patch",
+    "parameters": [
+     {
+      "name": "allocation_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Allocation Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AllocationPatch"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AllocationOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/allocations/bulk": {
+   "post": {
+    "tags": [
+     "transactions"
+    ],
+    "summary": "Bulk Change",
+    "description": "All selected allocations change together, or none do (one database transaction).",
+    "operationId": "bulk_change_allocations_bulk_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BulkChange"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BulkResult"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "AllocationOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "amount": {
+      "type": "string",
+      "title": "Amount"
+     },
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "personal": {
+      "type": "boolean",
+      "title": "Personal"
+     },
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Confidence"
+     },
+     "suggested_category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Suggested Category"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "amount",
+     "category",
+     "personal",
+     "source",
+     "confidence",
+     "suggested_category"
+    ],
+    "title": "AllocationOut"
+   },
+   "AllocationPatch": {
+    "properties": {
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "personal": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Personal"
+     }
+    },
+    "type": "object",
+    "title": "AllocationPatch",
+    "description": "Only the fields sent are changed; `\"category\": null` clears the category."
+   },
+   "Body_create_imports_imports_post": {
+    "properties": {
+     "files": {
+      "items": {
+       "type": "string",
+       "contentMediaType": "application/octet-stream"
+      },
+      "type": "array",
+      "title": "Files"
+     }
+    },
+    "type": "object",
+    "required": [
+     "files"
+    ],
+    "title": "Body_create_imports_imports_post"
+   },
+   "BulkChange": {
+    "properties": {
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "personal": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Personal"
+     },
+     "allocation_ids": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array",
+      "maxItems": 1000,
+      "minItems": 1,
+      "title": "Allocation Ids"
+     }
+    },
+    "type": "object",
+    "required": [
+     "allocation_ids"
+    ],
+    "title": "BulkChange"
+   },
+   "BulkResult": {
+    "properties": {
+     "updated": {
+      "type": "integer",
+      "title": "Updated"
+     }
+    },
+    "type": "object",
+    "required": [
+     "updated"
+    ],
+    "title": "BulkResult"
+   },
+   "CategorizeStats": {
+    "properties": {
+     "merchants_linked": {
+      "type": "integer",
+      "title": "Merchants Linked",
+      "default": 0
+     },
+     "allocations_changed": {
+      "type": "integer",
+      "title": "Allocations Changed",
+      "default": 0
+     },
+     "internal_pairs": {
+      "type": "integer",
+      "title": "Internal Pairs",
+      "default": 0
+     },
+     "ml_applied": {
+      "type": "integer",
+      "title": "Ml Applied",
+      "default": 0
+     },
+     "needs_review": {
+      "type": "integer",
+      "title": "Needs Review",
+      "default": 0
+     }
+    },
+    "type": "object",
+    "title": "CategorizeStats"
+   },
+   "CategoryOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "path": {
+      "type": "string",
+      "title": "Path"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "parent": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Parent"
+     },
+     "excluded_from_settlement": {
+      "type": "boolean",
+      "title": "Excluded From Settlement"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "path",
+     "name",
+     "parent",
+     "excluded_from_settlement"
+    ],
+    "title": "CategoryOut"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "type": "array",
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+   },
+   "ImportResponse": {
+    "properties": {
+     "imports": {
+      "items": {
+       "$ref": "#/components/schemas/ImportStats"
+      },
+      "type": "array",
+      "title": "Imports"
+     }
+    },
+    "type": "object",
+    "required": [
+     "imports"
+    ],
+    "title": "ImportResponse"
+   },
+   "ImportStats": {
+    "properties": {
+     "batch_id": {
+      "type": "integer",
+      "title": "Batch Id"
+     },
+     "filename": {
+      "type": "string",
+      "title": "Filename"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "rows_parsed": {
+      "type": "integer",
+      "title": "Rows Parsed",
+      "default": 0
+     },
+     "inserted": {
+      "type": "integer",
+      "title": "Inserted",
+      "default": 0
+     },
+     "duplicates": {
+      "type": "integer",
+      "title": "Duplicates",
+      "default": 0
+     },
+     "holds_skipped": {
+      "type": "integer",
+      "title": "Holds Skipped",
+      "default": 0
+     },
+     "quarantined": {
+      "type": "integer",
+      "title": "Quarantined",
+      "default": 0
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings",
+      "default": []
+     }
+    },
+    "type": "object",
+    "required": [
+     "batch_id",
+     "filename",
+     "status"
+    ],
+    "title": "ImportStats",
+    "description": "What happened to one file. Holds no row content, so it is safe to show and log."
+   },
+   "ManualCategory": {
+    "properties": {
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "personal": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Personal"
+     },
+     "remember_for_merchant": {
+      "type": "boolean",
+      "title": "Remember For Merchant",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "category"
+    ],
+    "title": "ManualCategory"
+   },
+   "PreviewOut": {
+    "properties": {
+     "matched": {
+      "type": "integer",
+      "title": "Matched"
+     },
+     "would_change": {
+      "type": "integer",
+      "title": "Would Change"
+     },
+     "sample": {
+      "items": {
+       "$ref": "#/components/schemas/PreviewRow"
+      },
+      "type": "array",
+      "title": "Sample"
+     }
+    },
+    "type": "object",
+    "required": [
+     "matched",
+     "would_change",
+     "sample"
+    ],
+    "title": "PreviewOut"
+   },
+   "PreviewRow": {
+    "properties": {
+     "transaction_id": {
+      "type": "integer",
+      "title": "Transaction Id"
+     },
+     "transaction_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Transaction Date"
+     },
+     "counterparty": {
+      "type": "string",
+      "title": "Counterparty"
+     },
+     "amount": {
+      "type": "string",
+      "title": "Amount"
+     },
+     "category_now": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category Now"
+     },
+     "category_after": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category After"
+     },
+     "personal_now": {
+      "type": "boolean",
+      "title": "Personal Now"
+     },
+     "personal_after": {
+      "type": "boolean",
+      "title": "Personal After"
+     }
+    },
+    "type": "object",
+    "required": [
+     "transaction_id",
+     "transaction_date",
+     "counterparty",
+     "amount",
+     "category_now",
+     "category_after",
+     "personal_now",
+     "personal_after"
+    ],
+    "title": "PreviewRow"
+   },
+   "ReviewRow": {
+    "properties": {
+     "transaction_id": {
+      "type": "integer",
+      "title": "Transaction Id"
+     },
+     "transaction_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Transaction Date"
+     },
+     "counterparty": {
+      "type": "string",
+      "title": "Counterparty"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "amount": {
+      "type": "string",
+      "title": "Amount"
+     },
+     "suggested_category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Suggested Category"
+     },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Confidence"
+     }
+    },
+    "type": "object",
+    "required": [
+     "transaction_id",
+     "transaction_date",
+     "counterparty",
+     "title",
+     "amount",
+     "suggested_category",
+     "confidence"
+    ],
+    "title": "ReviewRow"
+   },
+   "RuleConditions-Input": {
+    "properties": {
+     "merchant": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Merchant"
+     },
+     "phrase": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Phrase"
+     },
+     "regex": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Regex"
+     },
+     "amount_min": {
+      "anyOf": [
+       {
+        "type": "number",
+        "minimum": 0.0
+       },
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Amount Min"
+     },
+     "amount_max": {
+      "anyOf": [
+       {
+        "type": "number",
+        "minimum": 0.0
+       },
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Amount Max"
+     },
+     "account": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Account"
+     },
+     "weekdays": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "integer"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Weekdays"
+     },
+     "operation_kind": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Operation Kind"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "RuleConditions",
+    "description": "What a rule looks at. Unknown keys are rejected, so a typo never matches everything."
+   },
+   "RuleConditions-Output": {
+    "properties": {
+     "merchant": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Merchant"
+     },
+     "phrase": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Phrase"
+     },
+     "regex": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Regex"
+     },
+     "amount_min": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Amount Min"
+     },
+     "amount_max": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Amount Max"
+     },
+     "account": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Account"
+     },
+     "weekdays": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "integer"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Weekdays"
+     },
+     "operation_kind": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Operation Kind"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "RuleConditions",
+    "description": "What a rule looks at. Unknown keys are rejected, so a typo never matches everything."
+   },
+   "RuleOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "rule": {
+      "$ref": "#/components/schemas/RuleSpec-Output"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "rule"
+    ],
+    "title": "RuleOut"
+   },
+   "RuleSpec-Input": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Name"
+     },
+     "priority": {
+      "type": "integer",
+      "title": "Priority",
+      "default": 100
+     },
+     "when": {
+      "$ref": "#/components/schemas/RuleConditions-Input"
+     },
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "personal": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Personal"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "name",
+     "when"
+    ],
+    "title": "RuleSpec",
+    "description": "A rule as the owner writes it (TOML seed or API). `category` is a \"Parent/Child\" path."
+   },
+   "RuleSpec-Output": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Name"
+     },
+     "priority": {
+      "type": "integer",
+      "title": "Priority",
+      "default": 100
+     },
+     "when": {
+      "$ref": "#/components/schemas/RuleConditions-Output"
+     },
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "personal": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Personal"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "name",
+     "when"
+    ],
+    "title": "RuleSpec",
+    "description": "A rule as the owner writes it (TOML seed or API). `category` is a \"Parent/Child\" path."
+   },
+   "TransactionOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "transaction_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Transaction Date"
+     },
+     "booking_date": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Booking Date"
+     },
+     "amount": {
+      "type": "string",
+      "title": "Amount"
+     },
+     "currency": {
+      "type": "string",
+      "title": "Currency"
+     },
+     "counterparty": {
+      "type": "string",
+      "title": "Counterparty"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "account": {
+      "type": "string",
+      "title": "Account"
+     },
+     "merchant": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Merchant"
+     },
+     "allocations": {
+      "items": {
+       "$ref": "#/components/schemas/AllocationOut"
+      },
+      "type": "array",
+      "title": "Allocations"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "transaction_date",
+     "booking_date",
+     "amount",
+     "currency",
+     "counterparty",
+     "title",
+     "account",
+     "merchant",
+     "allocations"
+    ],
+    "title": "TransactionOut"
+   },
+   "TransactionPage": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/TransactionOut"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "TransactionPage"
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Location"
+     },
+     "msg": {
+      "type": "string",
+      "title": "Message"
+     },
+     "type": {
+      "type": "string",
+      "title": "Error Type"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "ctx": {
+      "type": "object",
+      "title": "Context"
+     }
+    },
+    "type": "object",
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError"
+   }
+  }
+ }
+}

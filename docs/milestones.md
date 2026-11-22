@@ -271,4 +271,7 @@ Appended by `/milestone-skarbonka` when a hard part is likely to bite again. One
 - 2026-11-21 M5: after pulling M5 run `uv run alembic upgrade head` and `uv run skarbonka seed`. Editing `backend/src/skarbonka/categorization/categories.toml` needs another `seed`; renaming a category in TOML creates a new one (the old stays, rules move to the new name).
 - 2026-11-22 M6: torch for the `embeddings` extra comes from `download.pytorch.org` (CPU index, set in `pyproject.toml`); a network policy must allow it and `download-r2.pytorch.org`. Hugging Face downloads over Xet (`cas-server.xethub.hf.co`) may be blocked by a proxy: `HF_HUB_DISABLE_XET=1` falls back to the plain CDN. Once cached, `HF_HUB_OFFLINE=1` keeps the model fully local.
 - 2026-11-22 M6: a model in `models/` is unpickled with joblib. Only load models you trained yourself with `skarbonka train`.
+- 2026-11-22 M7: `frontend/openapi.json` must match the API (`tests/api/test_openapi_snapshot.py`). After any API change run `npm run api:types` in `frontend/` and commit both `openapi.json` and `src/api/schema.ts`.
+- 2026-11-22 M7: TypeScript is pinned to `~5.9` because openapi-typescript 7 declares a TypeScript 5 peer; do not let `npm update` move it to 6+ until openapi-typescript supports it.
+- 2026-11-22 M7: shadcn components are added with `npx shadcn@latest add <name>`, which needs `ui.shadcn.com`. The generated `button.tsx` and `badge.tsx` trigger two oxlint `only-export-components` warnings; they are harmless and left as generated.
 

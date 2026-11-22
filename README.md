@@ -62,6 +62,15 @@ uv run pytest -q
 uv run uvicorn skarbonka.api.main:app --reload   # http://localhost:8000/health
 ```
 
+Frontend (in a second terminal, with the backend running):
+
+```bash
+cd frontend
+npm install
+npm run dev          # http://localhost:5173, API calls are proxied to :8000
+npm run api:types    # after an API change: regenerate src/api/schema.ts from the OpenAPI schema
+```
+
 ## Roadmap
 
 | Stage | Scope | Status |

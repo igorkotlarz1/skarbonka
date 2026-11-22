@@ -8,6 +8,10 @@ import {
   type BulkChange,
   type BulkResult,
   type Category,
+  type PatchResult,
+  type RuleSpec,
+  type SplitIn,
+  type Transaction,
   type TransactionPage,
 } from './client'
 
@@ -43,7 +47,7 @@ export function usePatchAllocation() {
   const client = useQueryClient()
   return useMutation({
     mutationFn: ({ id, patch }: { id: number; patch: AllocationPatch }) =>
-      api.patch<Allocation>(`/allocations/${id}`, patch),
+      api.patch<PatchResult>(`/allocations/${id}`, patch),
     onSuccess: () => client.invalidateQueries({ queryKey: ['transactions'] }),
   })
 }
@@ -52,6 +56,32 @@ export function useBulkChange() {
   const client = useQueryClient()
   return useMutation({
     mutationFn: (change: BulkChange) => api.post<BulkResult>('/allocations/bulk', change),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['transactions'] }),
+  })
+}
+
+export function useAcceptSuggestion() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, remember }: { id: number; remember: boolean }) =>
+      api.post<Allocation>(`/allocations/${id}/accept`, { remember_for_merchant: remember }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['transactions'] }),
+  })
+}
+
+export function useSplit() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, split }: { id: number; split: SplitIn }) =>
+      api.put<Transaction>(`/transactions/${id}/splits`, split),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['transactions'] }),
+  })
+}
+
+export function useCreateRule() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (rule: RuleSpec) => api.post<unknown>('/rules', rule),
     onSuccess: () => client.invalidateQueries({ queryKey: ['transactions'] }),
   })
 }

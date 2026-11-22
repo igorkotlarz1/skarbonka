@@ -274,4 +274,5 @@ Appended by `/milestone-skarbonka` when a hard part is likely to bite again. One
 - 2026-11-22 M7: `frontend/openapi.json` must match the API (`tests/api/test_openapi_snapshot.py`). After any API change run `npm run api:types` in `frontend/` and commit both `openapi.json` and `src/api/schema.ts`.
 - 2026-11-22 M7: TypeScript is pinned to `~5.9` because openapi-typescript 7 declares a TypeScript 5 peer; do not let `npm update` move it to 6+ until openapi-typescript supports it.
 - 2026-11-22 M7: shadcn components are added with `npx shadcn@latest add <name>`, which needs `ui.shadcn.com`. The generated `button.tsx` and `badge.tsx` trigger two oxlint `only-export-components` warnings; they are harmless and left as generated.
+- 2026-11-22 M8: endpoints roll back the whole session on failure (`atomic()` in `api/transactions.py`). In tests the session joins an outer transaction, so commit fixture data (`db.commit()`, which only releases a savepoint) before calling an endpoint that may fail, or its rollback also removes the fixture rows.
 

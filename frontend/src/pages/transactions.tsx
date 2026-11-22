@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, ScissorsIcon, XIcon } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 
 import type { Allocation, Category, Transaction } from '@/api/client'
@@ -10,6 +10,7 @@ import {
   useTransactions,
 } from '@/api/hooks'
 import { ANY, CategorySelect } from '@/components/category-select'
+import { SplitDialog } from '@/components/split-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -49,6 +50,7 @@ export function TransactionsPage() {
   const categories = useCategories().data ?? []
   const patch = usePatchAllocation()
   const bulk = useBulkChange()
+  const [splitting, setSplitting] = useState<Transaction | null>(null)
 
   // Selection belongs to one view: changing filters or the page clears it.
   const viewKey = JSON.stringify(search)
@@ -131,6 +133,9 @@ export function TransactionsPage() {
               <TableHead className="w-36 text-right">Kwota</TableHead>
               <TableHead className="w-80">Kategoria</TableHead>
               <TableHead className="w-24 text-center">Osobiste</TableHead>
+              <TableHead className="w-12">
+                <span className="sr-only">Podziel</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className={cn(transactions.isPlaceholderData && 'opacity-60')}>
@@ -143,18 +148,19 @@ export function TransactionsPage() {
                 onSelect={toggle}
                 onMerchant={(merchant) => setFilters({ merchant })}
                 onPatch={(id, change) => patch.mutate({ id, patch: change })}
+                onSplit={() => setSplitting(t)}
               />
             ))}
             {page && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                   Brak transakcji dla tych filtrów.
                 </TableCell>
               </TableRow>
             )}
             {transactions.isPending && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                   Wczytuję…
                 </TableCell>
               </TableRow>
@@ -186,6 +192,11 @@ export function TransactionsPage() {
           </Button>
         </div>
       )}
+      <SplitDialog
+        transaction={splitting}
+        categories={categories}
+        onClose={() => setSplitting(null)}
+      />
     </div>
   )
 }
@@ -384,6 +395,7 @@ type RowProps = {
   onSelect: (ids: number[], on: boolean) => void
   onMerchant: (merchant: string) => void
   onPatch: (allocationId: number, change: { category?: string | null; personal?: boolean }) => void
+  onSplit: () => void
 }
 
 function TransactionRow({
@@ -393,6 +405,7 @@ function TransactionRow({
   onSelect,
   onMerchant,
   onPatch,
+  onSplit,
 }: RowProps) {
   const ids = t.allocations.map((a) => a.id)
   // Splits (several allocations) get their own editor later; the list edits the first part.
@@ -453,6 +466,11 @@ function TransactionRow({
             onCheckedChange={(personal) => onPatch(allocation.id, { personal })}
           />
         )}
+      </TableCell>
+      <TableCell>
+        <Button variant="ghost" size="icon-sm" aria-label="Podziel transakcję" onClick={onSplit}>
+          <ScissorsIcon />
+        </Button>
       </TableCell>
     </TableRow>
   )

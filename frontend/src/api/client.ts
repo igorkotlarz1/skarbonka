@@ -10,6 +10,10 @@ export type Category = Schemas['CategoryOut']
 export type AllocationPatch = Schemas['AllocationPatch']
 export type BulkChange = Schemas['BulkChange']
 export type BulkResult = Schemas['BulkResult']
+export type PatchResult = Schemas['PatchResult']
+export type RuleSuggestion = Schemas['RuleSuggestion']
+export type RuleSpec = Schemas['RuleSpec-Output'] // a suggestion's rule, posted back as is
+export type SplitIn = Schemas['SplitIn']
 
 export class ApiError extends Error {
   readonly status: number
@@ -56,4 +60,5 @@ export const api = {
   get: <T>(path: string, query?: Query) => request<T>('GET', path, undefined, query),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, body),
   post: <T>(path: string, body: unknown) => request<T>('POST', path, body),
+  put: <T>(path: string, body: unknown) => request<T>('PUT', path, body),
 }

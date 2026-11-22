@@ -1,5 +1,7 @@
-"""Transaction list, categories, and the owner's edits to allocations (M7)."""
+"""Transaction list, categories, and the owner's edits to allocations (M7, M8)."""
 
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
 from typing import Self
@@ -9,10 +11,13 @@ from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from skarbonka.api.imports import SessionDep
+from skarbonka.api.imports import ModelDep, SessionDep, ThresholdDep
 from skarbonka.db.models import Allocation, Category, Merchant, Transaction
 from skarbonka.domain.allocations import owner_change
 from skarbonka.domain.categories import UnknownCategoryError, category_by_path
+from skarbonka.domain.categorize import categorize
+from skarbonka.domain.splits import SettledError, SplitError, SplitPart, split_transaction
+from skarbonka.domain.suggestions import RuleSuggestion, rule_suggestion
 
 router = APIRouter(tags=["transactions"])
 
@@ -79,6 +84,37 @@ class BulkResult(BaseModel):
     updated: int
 
 
+class PatchResult(AllocationOut):
+    """The changed allocation, plus a rule proposal when a category was set by hand."""
+
+    rule_suggestion: RuleSuggestion | None = None
+
+
+class AcceptBody(BaseModel):
+    remember_for_merchant: bool = False
+
+
+class SplitPartIn(BaseModel):
+    amount: Decimal
+    category: str | None = None
+    personal: bool = False
+
+
+class SplitIn(BaseModel):
+    parts: list[SplitPartIn] = Field(min_length=1, max_length=50)
+
+
+@contextmanager
+def atomic(session: Session) -> Iterator[None]:
+    """Commit everything the block did, the audit rows included, or roll all of it back."""
+    try:
+        yield
+        session.commit()
+    except BaseException:
+        session.rollback()
+        raise
+
+
 def category_paths(session: Session) -> dict[int, str]:
     categories = list(session.scalars(select(Category)))
     names = {c.id: c.name for c in categories}
@@ -104,6 +140,29 @@ def _allocation_out(a: Allocation, paths: dict[int, str]) -> AllocationOut:
         confidence=a.confidence,
         suggested_category=paths.get(a.suggested_category_id) if a.suggested_category_id else None,
     )
+
+
+def transactions_out(session: Session, rows: Sequence[Transaction]) -> list[TransactionOut]:
+    paths = category_paths(session)
+    merchant_ids = {t.merchant_id for t in rows if t.merchant_id}
+    merchants = {
+        m.id: m.name for m in session.scalars(select(Merchant).where(Merchant.id.in_(merchant_ids)))
+    }
+    return [
+        TransactionOut(
+            id=t.id,
+            transaction_date=t.transaction_date,
+            booking_date=t.booking_date,
+            amount=t.amount,
+            currency=t.currency,
+            counterparty=t.counterparty.strip(),
+            title=t.title.strip(),
+            account=t.account.name,
+            merchant=merchants.get(t.merchant_id) if t.merchant_id else None,
+            allocations=[_allocation_out(a, paths) for a in t.allocations],
+        )
+        for t in rows
+    ]
 
 
 @router.get("/categories")
@@ -169,47 +228,82 @@ def list_transactions(
         .offset((page - 1) * page_size)
         .limit(page_size)
     ).all()
-    paths = category_paths(session)
-    merchant_ids = {t.merchant_id for t in rows if t.merchant_id}
-    merchants = {
-        m.id: m.name for m in session.scalars(select(Merchant).where(Merchant.id.in_(merchant_ids)))
-    }
-    items = [
-        TransactionOut(
-            id=t.id,
-            transaction_date=t.transaction_date,
-            booking_date=t.booking_date,
-            amount=t.amount,
-            currency=t.currency,
-            counterparty=t.counterparty.strip(),
-            title=t.title.strip(),
-            account=t.account.name,
-            merchant=merchants.get(t.merchant_id) if t.merchant_id else None,
-            allocations=[_allocation_out(a, paths) for a in t.allocations],
-        )
-        for t in rows
-    ]
-    return TransactionPage(items=items, total=total, page=page, page_size=page_size)
+    return TransactionPage(
+        items=transactions_out(session, rows), total=total, page=page, page_size=page_size
+    )
 
 
 @router.patch("/allocations/{allocation_id}")
-def patch_allocation(
-    allocation_id: int, body: AllocationPatch, session: SessionDep
-) -> AllocationOut:
+def patch_allocation(allocation_id: int, body: AllocationPatch, session: SessionDep) -> PatchResult:
     allocation = session.get(Allocation, allocation_id)
     if allocation is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "no such allocation")
     set_category = "category" in body.model_fields_set
-    owner_change(
-        session,
-        allocation,
-        set_category=set_category,
-        category_id=_category_id(session, body.category) if set_category else None,
-        personal=body.personal,
-        action="patch",
-    )
-    session.commit()
+    with atomic(session):
+        owner_change(
+            session,
+            allocation,
+            set_category=set_category,
+            category_id=_category_id(session, body.category) if set_category else None,
+            personal=body.personal,
+            action="patch",
+        )
+    out = _allocation_out(allocation, category_paths(session))
+    suggestion = rule_suggestion(session, allocation) if set_category else None
+    return PatchResult(**out.model_dump(), rule_suggestion=suggestion)
+
+
+@router.post("/allocations/{allocation_id}/accept")
+def accept_suggestion(
+    allocation_id: int,
+    body: AcceptBody,
+    session: SessionDep,
+    model: ModelDep,
+    threshold: ThresholdDep,
+) -> AllocationOut:
+    """The owner's one click on a proposal: it becomes a manual category, optionally the
+    merchant's default (which then recategorizes the merchant's other automatic rows)."""
+    allocation = session.get(Allocation, allocation_id)
+    if allocation is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "no such allocation")
+    suggested = allocation.suggested_category_id
+    if suggested is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "nothing to accept")
+    with atomic(session):
+        owner_change(
+            session,
+            allocation,
+            set_category=True,
+            category_id=suggested,
+            personal=None,
+            action="accept",
+        )
+        merchant_id = allocation.transaction.merchant_id
+        if body.remember_for_merchant and merchant_id is not None:
+            session.get_one(Merchant, merchant_id).default_category_id = suggested
+            same = session.scalars(
+                select(Transaction).where(Transaction.merchant_id == merchant_id)
+            )
+            categorize(session, same, model=model, threshold=threshold)
     return _allocation_out(allocation, category_paths(session))
+
+
+@router.put("/transactions/{transaction_id}/splits")
+def put_splits(transaction_id: int, body: SplitIn, session: SessionDep) -> TransactionOut:
+    """Split a transaction into parts that sum to it exactly; one part merges it back."""
+    t = session.get(Transaction, transaction_id)
+    if t is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "no such transaction")
+    parts = [SplitPart(p.amount, _category_id(session, p.category), p.personal) for p in body.parts]
+    try:
+        with atomic(session):
+            split_transaction(session, t, parts)
+    except SplitError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
+    except SettledError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    session.refresh(t)
+    return transactions_out(session, [t])[0]
 
 
 @router.post("/allocations/bulk")
@@ -222,14 +316,14 @@ def bulk_change(body: BulkChange, session: SessionDep) -> BulkResult:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"no such allocations: {sorted(missing)}")
     set_category = "category" in body.model_fields_set
     category_id = _category_id(session, body.category) if set_category else None
-    for allocation in allocations:
-        owner_change(
-            session,
-            allocation,
-            set_category=set_category,
-            category_id=category_id,
-            personal=body.personal,
-            action="bulk",
-        )
-    session.commit()
+    with atomic(session):
+        for allocation in allocations:
+            owner_change(
+                session,
+                allocation,
+                set_category=set_category,
+                category_id=category_id,
+                personal=body.personal,
+                action="bulk",
+            )
     return BulkResult(updated=len(allocations))

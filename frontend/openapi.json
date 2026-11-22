@@ -578,7 +578,113 @@
       "content": {
        "application/json": {
         "schema": {
+         "$ref": "#/components/schemas/PatchResult"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/allocations/{allocation_id}/accept": {
+   "post": {
+    "tags": [
+     "transactions"
+    ],
+    "summary": "Accept Suggestion",
+    "description": "The owner's one click on a proposal: it becomes a manual category, optionally the\nmerchant's default (which then recategorizes the merchant's other automatic rows).",
+    "operationId": "accept_suggestion_allocations__allocation_id__accept_post",
+    "parameters": [
+     {
+      "name": "allocation_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Allocation Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AcceptBody"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
          "$ref": "#/components/schemas/AllocationOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/transactions/{transaction_id}/splits": {
+   "put": {
+    "tags": [
+     "transactions"
+    ],
+    "summary": "Put Splits",
+    "description": "Split a transaction into parts that sum to it exactly; one part merges it back.",
+    "operationId": "put_splits_transactions__transaction_id__splits_put",
+    "parameters": [
+     {
+      "name": "transaction_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Transaction Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SplitIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TransactionOut"
         }
        }
       }
@@ -641,6 +747,17 @@
  },
  "components": {
   "schemas": {
+   "AcceptBody": {
+    "properties": {
+     "remember_for_merchant": {
+      "type": "boolean",
+      "title": "Remember For Merchant",
+      "default": false
+     }
+    },
+    "type": "object",
+    "title": "AcceptBody"
+   },
    "AllocationOut": {
     "properties": {
      "id": {
@@ -1007,6 +1124,81 @@
      "category"
     ],
     "title": "ManualCategory"
+   },
+   "PatchResult": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "amount": {
+      "type": "string",
+      "title": "Amount"
+     },
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "personal": {
+      "type": "boolean",
+      "title": "Personal"
+     },
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Confidence"
+     },
+     "suggested_category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Suggested Category"
+     },
+     "rule_suggestion": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RuleSuggestion"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "amount",
+     "category",
+     "personal",
+     "source",
+     "confidence",
+     "suggested_category"
+    ],
+    "title": "PatchResult",
+    "description": "The changed allocation, plus a rule proposal when a category was set by hand."
    },
    "PreviewOut": {
     "properties": {
@@ -1473,6 +1665,78 @@
     ],
     "title": "RuleSpec",
     "description": "A rule as the owner writes it (TOML seed or API). `category` is a \"Parent/Child\" path."
+   },
+   "RuleSuggestion": {
+    "properties": {
+     "rule": {
+      "$ref": "#/components/schemas/RuleSpec-Output"
+     },
+     "would_change": {
+      "type": "integer",
+      "title": "Would Change"
+     }
+    },
+    "type": "object",
+    "required": [
+     "rule",
+     "would_change"
+    ],
+    "title": "RuleSuggestion",
+    "description": "A ready `POST /rules` body plus how many other transactions it would recategorize now."
+   },
+   "SplitIn": {
+    "properties": {
+     "parts": {
+      "items": {
+       "$ref": "#/components/schemas/SplitPartIn"
+      },
+      "type": "array",
+      "maxItems": 50,
+      "minItems": 1,
+      "title": "Parts"
+     }
+    },
+    "type": "object",
+    "required": [
+     "parts"
+    ],
+    "title": "SplitIn"
+   },
+   "SplitPartIn": {
+    "properties": {
+     "amount": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "string"
+       }
+      ],
+      "title": "Amount"
+     },
+     "category": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Category"
+     },
+     "personal": {
+      "type": "boolean",
+      "title": "Personal",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "amount"
+    ],
+    "title": "SplitPartIn"
    },
    "TransactionOut": {
     "properties": {
